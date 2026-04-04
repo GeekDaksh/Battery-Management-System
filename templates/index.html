@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BMS AI Dashboard</title>
+
+<!-- FONT -->
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", "Helvetica Neue", sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 460px;
+}
+
+.card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 25px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: #020617;
+  color: white;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: none;
+  border: 1px solid #22c55e;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(34,197,94,0.4);
+}
+
+/* RESULT PANEL */
+.result {
+  margin-top: 25px;
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(2,6,23,0.8);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.decision {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.safe {
+  color: #22c55e;
+}
+
+.risk {
+  color: #ef4444;
+}
+
+.label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 10px;
+}
+
+.value {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+/* PROGRESS BAR */
+.bar {
+  height: 6px;
+  background: #1e293b;
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.loading {
+  font-size: 13px;
+  color: #94a3b8;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+```
+<h1>🔋 Battery Intelligence</h1>
+<div class="subtitle">Multi-Agent AI Decision System</div>
+
+<input type="number" id="soc" placeholder="State of Charge (0–1)">
+<input type="number" id="soh" placeholder="State of Health (0–1)">
+<input type="number" id="temp" placeholder="Temperature (°C)">
+<input type="number" id="current" placeholder="Current (A)">
+
+<button onclick="predict()">Run Analysis</button>
+
+<div id="result"></div>
+```
+
+  </div>
+</div>
+
+<script>
+async function predict() {
+  const resultDiv = document.getElementById("result");
+
+  resultDiv.innerHTML = `<div class="loading">⏳ Running multi-agent pipeline...</div>`;
+
+  const data = {
+    soc: parseFloat(document.getElementById("soc").value),
+    soh: parseFloat(document.getElementById("soh").value),
+    temp: parseFloat(document.getElementById("temp").value),
+    current: parseFloat(document.getElementById("current").value)
+  };
+
+  try {
+    const response = await fetch("/predict", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
+
+    const res = await response.json();
+
+    if (res.status === "error") {
+      resultDiv.innerHTML = `<div class="result">❌ ${res.message}</div>`;
+      return;
+    }
+
+    const confidence = (res.confidence * 100).toFixed(1);
+
+    const decisionClass = res.decision === "SAFE" ? "safe" : "risk";
+
+    resultDiv.innerHTML = `
+      <div class="result">
+
+        <div class="decision ${decisionClass}">
+          ${res.decision}
+        </div>
+
+        <div class="label">Reason</div>
+        <div class="value">${res.reason}</div>
+
+        <div class="label">Policy Selected</div>
+        <div class="value">#${res.policy_id}</div>
+
+        <div class="label">Confidence (${confidence}%)</div>
+        <div class="bar">
+          <div class="fill" style="width:${confidence}%"></div>
+        </div>
+
+        <div class="label">Predicted State</div>
+        <div class="value">
+          SOC: ${res.soc.toFixed(3)} |
+          SOH: ${res.soh.toFixed(3)} |
+          Temp: ${res.temperature.toFixed(1)}°C
+        </div>
+
+      </div>
+    `;
+
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="result">❌ Server connection failed</div>`;
+  }
+}
+</script>
+
+</body>
+</html>
