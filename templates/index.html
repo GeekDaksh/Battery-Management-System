@@ -1,233 +1,141 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>BMS AI Dashboard</title>
-
-<!-- FONT -->
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Inter", "Helvetica Neue", sans-serif;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: #e2e8f0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.container {
-  width: 460px;
-}
-
-.card {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  border-radius: 18px;
-  padding: 32px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-}
-
-h1 {
-  font-weight: 600;
-  font-size: 22px;
-  margin-bottom: 6px;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 25px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
-  background: #020617;
-  color: white;
-  font-size: 14px;
-}
-
-input:focus {
-  outline: none;
-  border: 1px solid #22c55e;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: white;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(34,197,94,0.4);
-}
-
-/* RESULT PANEL */
-.result {
-  margin-top: 25px;
-  padding: 18px;
-  border-radius: 12px;
-  background: rgba(2,6,23,0.8);
-  border: 1px solid rgba(255,255,255,0.05);
-}
-
-.decision {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.safe {
-  color: #22c55e;
-}
-
-.risk {
-  color: #ef4444;
-}
-
-.label {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 10px;
-}
-
-.value {
-  font-size: 14px;
-  margin-top: 2px;
-}
-
-/* PROGRESS BAR */
-.bar {
-  height: 6px;
-  background: #1e293b;
-  border-radius: 10px;
-  margin-top: 10px;
-  overflow: hidden;
-}
-
-.fill {
-  height: 100%;
-  background: linear-gradient(90deg, #22c55e, #4ade80);
-  width: 0%;
-  transition: width 0.5s ease;
-}
-
-.loading {
-  font-size: 13px;
-  color: #94a3b8;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS Pro | Battery Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; }
+        .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); }
+    </style>
 </head>
-
 <body>
+    <div id="root"></div>
 
-<div class="container">
-  <div class="card">
+    <script type="text/babel">
+        const { useState } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+        const { motion } = FramerMotion;
 
-```
-<h1>🔋 Battery Intelligence</h1>
-<div class="subtitle">Multi-Agent AI Decision System</div>
+        const App = () => {
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            const [chartData, setChartData] = useState([]);
+            const [inputs, setInputs] = useState({ soc: 0.85, soh: 0.92, temp: 28, current: 1.5 });
 
-<input type="number" id="soc" placeholder="State of Charge (0–1)">
-<input type="number" id="soh" placeholder="State of Health (0–1)">
-<input type="number" id="temp" placeholder="Temperature (°C)">
-<input type="number" id="current" placeholder="Current (A)">
+            const handleDownload = () => {
+                const element = document.getElementById('report-area');
+                html2canvas(element, { backgroundColor: '#000', scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `BMS-Report-${Date.now()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            };
 
-<button onclick="predict()">Run Analysis</button>
+            const runAnalysis = async () => {
+                setLoading(true);
+                // Simulated API call for demo (Replace with your actual fetch)
+                setTimeout(() => {
+                    const mockRes = {
+                        decision: inputs.temp > 45 ? "RISK" : "SAFE",
+                        reason: inputs.temp > 45 ? "Thermal Runaway Detected" : "Nominal Operating State",
+                        confidence: 0.98,
+                        soc: inputs.soc,
+                        soh: inputs.soh,
+                        temperature: inputs.temp,
+                        policy_id: 102
+                    };
+                    setResult(mockRes);
+                    // Add to chart history
+                    setChartData(prev => [...prev, { name: new Date().toLocaleTimeString(), temp: inputs.temp, soc: inputs.soc * 100 }].slice(-10));
+                    setLoading(false);
+                }, 800);
+            };
 
-<div id="result"></div>
-```
+            return (
+                <div className="min-h-screen p-6 md:p-12">
+                    {/* Header */}
+                    <header className="max-w-6xl mx-auto flex justify-between items-center mb-12">
+                        <h1 className="text-2xl font-semibold tracking-tighter">BMS <span className="text-blue-500">INTELLIGENCE</span></h1>
+                        {result && (
+                            <button onClick={handleDownload} className="glass px-5 py-2 rounded-full text-sm font-medium hover:bg-white/10 transition">
+                                Download Report ↓
+                            </button>
+                        )}
+                    </header>
 
-  </div>
-</div>
+                    <div id="report-area" className="max-w-6xl mx-auto grid md:grid-cols-12 gap-8">
+                        {/* Control Panel */}
+                        <div className="md:col-span-4 space-y-6">
+                            <div className="glass p-8 rounded-[32px]">
+                                <h2 className="text-neutral-400 text-xs uppercase tracking-widest mb-6 font-bold">Telemetry Input</h2>
+                                {Object.keys(inputs).map(key => (
+                                    <div key={key} className="mb-4">
+                                        <label className="block text-xs text-neutral-500 mb-2 uppercase">{key}</label>
+                                        <input 
+                                            type="number" step="0.01" value={inputs[key]}
+                                            onChange={(e) => setInputs({...inputs, [key]: parseFloat(e.target.value)})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 focus:outline-none focus:border-blue-500 transition"
+                                        />
+                                    </div>
+                                ))}
+                                <button onClick={runAnalysis} className="w-full bg-blue-600 py-4 rounded-2xl font-bold mt-4 hover:bg-blue-500 transition">
+                                    {loading ? "Analysing..." : "Run AI Pipeline"}
+                                </button>
+                            </div>
+                        </div>
 
-<script>
-async function predict() {
-  const resultDiv = document.getElementById("result");
+                        {/* Analysis & Charts */}
+                        <div className="md:col-span-8 space-y-8">
+                            {result && (
+                                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass p-8 rounded-[32px]">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <div>
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${result.decision === 'SAFE' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                {result.decision}
+                                            </span>
+                                            <h2 className="text-3xl font-semibold mt-3">{result.reason}</h2>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-4xl font-light">{(result.confidence * 100).toFixed(0)}%</p>
+                                            <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Confidence Score</p>
+                                        </div>
+                                    </div>
 
-  resultDiv.innerHTML = `<div class="loading">⏳ Running multi-agent pipeline...</div>`;
+                                    {/* Chart Section */}
+                                    <div className="h-[300px] w-full mt-12">
+                                        <h3 className="text-xs text-neutral-500 uppercase mb-4 tracking-widest">Live Performance Tracking</h3>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={chartData}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+                                                <XAxis dataKey="name" hide />
+                                                <YAxis stroke="#444" fontSize={12} />
+                                                <Tooltip contentStyle={{ background: '#111', border: '1px solid #333', borderRadius: '12px' }} />
+                                                <Line type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                                                <Line type="monotone" dataKey="soc" stroke="#10b981" strokeWidth={3} dot={false} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
-  const data = {
-    soc: parseFloat(document.getElementById("soc").value),
-    soh: parseFloat(document.getElementById("soh").value),
-    temp: parseFloat(document.getElementById("temp").value),
-    current: parseFloat(document.getElementById("current").value)
-  };
-
-  try {
-    const response = await fetch("/predict", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(data)
-    });
-
-    const res = await response.json();
-
-    if (res.status === "error") {
-      resultDiv.innerHTML = `<div class="result">❌ ${res.message}</div>`;
-      return;
-    }
-
-    const confidence = (res.confidence * 100).toFixed(1);
-
-    const decisionClass = res.decision === "SAFE" ? "safe" : "risk";
-
-    resultDiv.innerHTML = `
-      <div class="result">
-
-        <div class="decision ${decisionClass}">
-          ${res.decision}
-        </div>
-
-        <div class="label">Reason</div>
-        <div class="value">${res.reason}</div>
-
-        <div class="label">Policy Selected</div>
-        <div class="value">#${res.policy_id}</div>
-
-        <div class="label">Confidence (${confidence}%)</div>
-        <div class="bar">
-          <div class="fill" style="width:${confidence}%"></div>
-        </div>
-
-        <div class="label">Predicted State</div>
-        <div class="value">
-          SOC: ${res.soc.toFixed(3)} |
-          SOH: ${res.soh.toFixed(3)} |
-          Temp: ${res.temperature.toFixed(1)}°C
-        </div>
-
-      </div>
-    `;
-
-  } catch (err) {
-    resultDiv.innerHTML = `<div class="result">❌ Server connection failed</div>`;
-  }
-}
-</script>
-
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
