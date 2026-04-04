@@ -1,11 +1,12 @@
 import os
 import pickle
 import torch
+import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+ bondagefrom fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
-# Ensure your pipeline logic is in the /src directory
+# Import your custom pipeline logic
 from src.bms_pipeline import (
     BatteryTransformer,
     run_predictor,
@@ -16,12 +17,21 @@ from src.bms_pipeline import (
 
 app = FastAPI(title="BMS Sentinel AI")
 
-# Robust Path Setup for Cloud Deployment
+# Enable CORS for flexibility
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Path Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
+STATIC_HTML = os.path.join(BASE_DIR, "static", "index.html")
 
-# Model Initialization
+# Model Loading (Global Scope)
 device = torch.device("cpu")
 model = BatteryTransformer(input_dim=11).to(device)
 
@@ -32,30 +42,27 @@ try:
         globs = pickle.load(f)
         global_mean = globs["global_mean"]
         global_std = globs["global_std"]
+    print("✅ BMS AI Core Initialized Successfully")
 except Exception as e:
-    print(f"CRITICAL: Model Initialization Failed: {e}")
+    print(f"❌ Initialization Error: {e}")
 
-# Templates setup with absolute path
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+# --- ROUTES ---
 
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """
-    FIX: Explicitly using keyword arguments (request=request) 
-    to prevent 'TypeError: cannot use tuple as dict key'
-    """
-    return templates.TemplateResponse(
-        request=request, 
-        name="index.html"
-    )
+@app.get("/")
+async def serve_frontend():
+    """Serves the Investor-Grade UI directly."""
+    if not os.path.exists(STATIC_HTML):
+        return {"error": f"Frontend missing at {STATIC_HTML}. Create a /static folder."}
+    return FileResponse(STATIC_HTML)
 
 @app.get("/health")
 async def health():
-    return {"status": "active"}
+    return {"status": "online", "engine": "Transformer-v3"}
 
 @app.post("/predict")
 async def predict(data: dict):
     try:
+        # 1. Parse Telemetry
         battery_input = {
             "soc": data.get("soc", 0.5),
             "soh": data.get("soh", 0.9),
@@ -64,7 +71,7 @@ async def predict(data: dict):
             "cycle_norm": data.get("cycle", 0.5),
         }
 
-        # Multi-Agent Pipeline Execution
+        # 2. Multi-Agent Pipeline Execution
         predictor_output = run_predictor(battery_input, model, global_mean, global_std, device)
         
         df, transformer_state = run_simulator_optimiser(predictor_output)
@@ -78,6 +85,7 @@ async def predict(data: dict):
             df, selected_policy, transformer_state, policies, metrics_df
         )
 
+        # 3. JSON Payload for React Charts
         return {
             "status": "success",
             "decision": decision["decision"],
@@ -91,3 +99,6 @@ async def predict(data: dict):
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

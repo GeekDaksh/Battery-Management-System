@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS Sentinel | Enterprise AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -14,15 +13,10 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        :root { --bg: #030712; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: #fff; overflow-x: hidden; }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glow-button { transition: all 0.3s ease; box-shadow: 0 0 20px 2px rgba(59, 130, 246, 0); }
-        .glow-button:hover { box-shadow: 0 0 25px 5px rgba(59, 130, 246, 0.3); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #030712; color: #fff; overflow-x: hidden; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow { transition: 0.3s; box-shadow: 0 0 20px 2px rgba(59, 130, 246, 0.3); }
+        input[type="range"] { accent-color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -31,7 +25,7 @@
     <script type="text/babel">
         const { useState } = React;
         const { motion, AnimatePresence } = FramerMotion;
-        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+        const { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
         const App = () => {
             const [loading, setLoading] = useState(false);
@@ -49,10 +43,9 @@
 
             const runAnalysis = async () => {
                 setLoading(true);
-                // Pipeline Simulation Animation
                 for(let i=0; i<4; i++) {
                     setActiveStep(i);
-                    await new Promise(r => setTimeout(r, 450));
+                    await new Promise(r => setTimeout(r, 500));
                 }
 
                 try {
@@ -67,40 +60,33 @@
                         setResult(data);
                         setHistory(prev => [...prev, { 
                             time: new Date().toLocaleTimeString().slice(3, 8), 
-                            temp: data.temperature, 
-                            soc: data.soc * 100 
+                            temp: data.temperature 
                         }].slice(-10));
                     }
-                } catch (e) {
-                    console.error("Backend connection failed.");
-                } finally {
-                    setLoading(false);
-                    setActiveStep(-1);
-                }
+                } catch (e) { alert("Backend Offline"); } 
+                finally { setLoading(false); setActiveStep(-1); }
             };
 
             return (
-                <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
-                    <nav className="flex justify-between items-center mb-16">
+                <div className="min-h-screen p-8 max-w-7xl mx-auto">
+                    <nav className="flex justify-between items-center mb-12">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20">
+                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30">
                                 <i data-lucide="zap" className="text-white w-7 h-7"></i>
                             </div>
                             <h1 className="text-2xl font-bold tracking-tight uppercase">Sentinel <span className="text-blue-500">AI</span></h1>
                         </div>
-                        <div className="flex items-center gap-3 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-green-500 text-[10px] font-bold uppercase tracking-widest">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Network Active
-                        </div>
+                        <div className="text-[10px] font-bold text-green-500 bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">SYSTEM OPERATIONAL</div>
                     </nav>
 
                     <div className="grid lg:grid-cols-12 gap-8">
                         {/* INPUT PANEL */}
                         <div className="lg:col-span-4 space-y-6">
-                            <div className="glass-panel p-8 rounded-[32px]">
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Telemetry Control</h3>
+                            <div className="glass p-8 rounded-[32px]">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-8 text-center">Telemetry Control</h3>
                                 {Object.keys(inputs).map((key) => (
                                     <div key={key} className="mb-6">
-                                        <div className="flex justify-between mb-3 text-[10px] font-bold uppercase text-gray-500">
+                                        <div className="flex justify-between mb-2 text-[10px] font-bold uppercase text-gray-500">
                                             <label>{key}</label>
                                             <span className="text-blue-400 font-mono">{inputs[key]}</span>
                                         </div>
@@ -108,20 +94,20 @@
                                             type="range" min="0" max={key === 'temp' ? '100' : key === 'current' ? '20' : '1'} step="0.01"
                                             value={inputs[key]}
                                             onChange={(e) => setInputs({...inputs, [key]: parseFloat(e.target.value)})}
-                                            className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer"
                                         />
                                     </div>
                                 ))}
-                                <button onClick={runAnalysis} disabled={loading} className="glow-button w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-sm mt-6 shadow-lg shadow-blue-600/20 transition-all">
-                                    {loading ? "PROCESSING..." : "INITIALIZE PIPELINE"}
+                                <button onClick={runAnalysis} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-sm mt-6 transition-all glow">
+                                    {loading ? "ANALYZING..." : "INITIALIZE AI PIPELINE"}
                                 </button>
                             </div>
 
-                            <div className="glass-panel p-6 rounded-[28px] space-y-4">
-                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pipeline Stack</h3>
+                            <div className="glass p-6 rounded-[28px] space-y-4">
+                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Pipeline Stack</h3>
                                 {agents.map((agent, i) => (
-                                    <div key={i} className={`flex items-center gap-4 p-3 rounded-xl transition-all ${activeStep === i ? 'bg-blue-500/20 border border-blue-500/40 translate-x-2' : 'opacity-30'}`}>
-                                        <div className={`p-2 rounded-lg ${activeStep === i ? 'bg-blue-500' : 'bg-gray-800'}`}>
+                                    <div key={i} className={`flex items-center gap-4 p-3 rounded-xl transition-all ${activeStep === i ? 'bg-blue-600/20 border border-blue-500/40 translate-x-2' : 'opacity-30'}`}>
+                                        <div className={`p-2 rounded-lg ${activeStep === i ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
                                             <i data-lucide={agent.icon} className="w-4 h-4"></i>
                                         </div>
                                         <span className="text-xs font-bold">{agent.name}</span>
@@ -130,45 +116,44 @@
                             </div>
                         </div>
 
-                        {/* RESULT PANEL */}
+                        {/* RESULT DISPLAY */}
                         <div className="lg:col-span-8">
                             <AnimatePresence mode="wait">
                                 {!result ? (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full glass-panel rounded-[40px] flex flex-col items-center justify-center text-gray-600 border-dashed border-2 border-gray-800">
-                                        <i data-lucide="refresh-cw" className="w-12 h-12 mb-4 animate-spin-slow"></i>
-                                        <p className="font-medium tracking-tight">Ready for incoming telemetry feed</p>
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full glass rounded-[40px] flex flex-col items-center justify-center text-gray-600 border-dashed border-2 border-gray-800">
+                                        <i data-lucide="activity" className="w-12 h-12 mb-4 opacity-20"></i>
+                                        <p className="font-medium tracking-tight">Awaiting Neural Link</p>
                                     </motion.div>
                                 ) : (
-                                    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-10 rounded-[40px] h-full">
-                                        <div className="flex justify-between items-start mb-12">
+                                    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="glass p-10 rounded-[40px] h-full shadow-2xl">
+                                        <div className="flex justify-between items-start mb-10">
                                             <div>
-                                                <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block mb-4 ${result.decision === 'SAFE' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                                    System Logic: {result.decision}
+                                                <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 inline-block ${result.decision === 'SAFE' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                    Logic Status: {result.decision}
                                                 </div>
-                                                <h2 className="text-5xl font-bold tracking-tight leading-tight max-w-lg">{result.reason}</h2>
+                                                <h2 className="text-5xl font-bold tracking-tight leading-tight">{result.reason}</h2>
                                             </div>
-                                            <div className="text-center p-6 glass-panel rounded-3xl border-white/5">
+                                            <div className="text-center bg-white/5 p-6 rounded-3xl border border-white/5">
                                                 <div className="text-5xl font-bold text-blue-500 tracking-tighter">{(result.confidence * 100).toFixed(0)}%</div>
                                                 <div className="text-[10px] font-bold text-gray-500 uppercase mt-2">AI Precision</div>
                                             </div>
                                         </div>
 
-                                        <div className="h-[280px] w-full bg-black/20 rounded-3xl p-6 border border-white/5">
+                                        <div className="h-[250px] w-full bg-black/20 rounded-3xl p-6 border border-white/5 mb-8">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={history}>
                                                     <defs><linearGradient id="color" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient></defs>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                                                     <XAxis dataKey="time" hide />
-                                                    <YAxis stroke="#444" fontSize={10} />
+                                                    <YAxis hide />
                                                     <Tooltip contentStyle={{ background: '#111', border: 'none', borderRadius: '12px' }} />
                                                     <Area type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#color)" />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-6 mt-10">
+                                        <div className="grid grid-cols-3 gap-6">
                                             {[{l: 'SOC', v: result.soc}, {l: 'SOH', v: result.soh}, {l: 'CORE TEMP', v: result.temperature + '°C'}].map((stat, i) => (
-                                                <div key={i} className="bg-white/5 p-5 rounded-2xl border border-white/5">
+                                                <div key={i} className="bg-white/5 p-5 rounded-2xl border border-white/5 text-center">
                                                     <p className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-widest">{stat.l}</p>
                                                     <p className="text-2xl font-bold text-gray-200">{typeof stat.v === 'number' && stat.l !== 'CORE TEMP' ? stat.v.toFixed(3) : stat.v}</p>
                                                 </div>
