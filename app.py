@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-# Assuming these are in your /src directory
+# Ensure your pipeline logic is in the /src directory
 from src.bms_pipeline import (
     BatteryTransformer,
     run_predictor,
@@ -14,9 +14,9 @@ from src.bms_pipeline import (
     run_kill_agent,
 )
 
-app = FastAPI(title="BMS AI System")
+app = FastAPI(title="BMS Sentinel AI")
 
-# Robust Path Setup for Render
+# Robust Path Setup for Cloud Deployment
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
@@ -25,7 +25,6 @@ GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
 device = torch.device("cpu")
 model = BatteryTransformer(input_dim=11).to(device)
 
-# Error handling for model loading
 try:
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model.eval()
@@ -34,7 +33,7 @@ try:
         global_mean = globs["global_mean"]
         global_std = globs["global_std"]
 except Exception as e:
-    print(f"Initialization Error: {e}")
+    print(f"CRITICAL: Model Initialization Failed: {e}")
 
 # Templates setup with absolute path
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
@@ -42,7 +41,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """
-    Explicitly using keyword arguments (request=request) 
+    FIX: Explicitly using keyword arguments (request=request) 
     to prevent 'TypeError: cannot use tuple as dict key'
     """
     return templates.TemplateResponse(
@@ -52,20 +51,20 @@ async def home(request: Request):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "active"}
 
 @app.post("/predict")
 async def predict(data: dict):
     try:
         battery_input = {
-            "soc": data.get("soc", 0.8),
+            "soc": data.get("soc", 0.5),
             "soh": data.get("soh", 0.9),
             "temp_C": data.get("temp", 25.0),
             "current_A": data.get("current", 0.0),
             "cycle_norm": data.get("cycle", 0.5),
         }
 
-        # Pipeline Flow
+        # Multi-Agent Pipeline Execution
         predictor_output = run_predictor(battery_input, model, global_mean, global_std, device)
         
         df, transformer_state = run_simulator_optimiser(predictor_output)
