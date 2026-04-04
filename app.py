@@ -1,9 +1,8 @@
 import os
-import pickle
 import torch
-import uvicorn
+import pickle
 from fastapi import FastAPI, Request
- bondagefrom fastapi.responses import FileResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import your custom pipeline logic
