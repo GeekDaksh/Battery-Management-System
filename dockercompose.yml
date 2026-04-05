@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  bms-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bms_api
+    ports:
+      - "10000:10000"
+    environment:
+      - PORT=10000
+      # Set this to your Render URL in production; localhost is fine locally
+      - RENDER_EXTERNAL_URL=http://localhost:10000
+    volumes:
+      # Mount models & dataset directories from host → container
+      # So you don't have to rebuild the image every time you retrain
+      - ./models:/app/models
+      - ./dataset:/app/dataset
+      - ./static:/app/static
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
