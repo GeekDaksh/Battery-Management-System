@@ -5,202 +5,252 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS Sentinel | Enterprise AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        * { box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #030712; color: #fff; margin: 0; }
-        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        input[type=range] { accent-color: #3b82f6; width: 100%; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        .fade-in { animation: fadeIn 0.35s ease forwards; }
+        .glass { background: rgba(17,24,39,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        input[type=range] { accent-color: #3b82f6; width: 100%; cursor: pointer; }
+        @keyframes fadeIn { from { opacity:0; transform:scale(0.98); } to { opacity:1; transform:scale(1); } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState } = React;
-        const { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
+<!-- Load React first, then Babel, then our app -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-        /* Inline SVG replacing lucide zap icon */
-        const ZapIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
-                fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
+<script type="text/babel">
+    const { useState } = React;
+
+    /* ── Zap SVG Icon ── */
+    const ZapIcon = () => (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+             stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+    );
+
+    /* ── Sparkline: pure SVG area chart, no dependencies ── */
+    const Sparkline = ({ data }) => {
+        if (!data || data.length < 2) return (
+            <div className="flex items-center justify-center h-full text-gray-600 text-sm">
+                Run analysis to see temperature trend
+            </div>
         );
 
-        const App = () => {
-            const [loading,    setLoading]    = useState(false);
-            const [result,     setResult]     = useState(null);
-            const [history,    setHistory]    = useState([]);
-            const [activeStep, setActiveStep] = useState(-1);
-            const [inputs,     setInputs]     = useState({ soc: 0.85, soh: 0.92, temp: 28, current: 4.5 });
-            const [error,      setError]      = useState(null);
-            const [resultKey,  setResultKey]  = useState(0);
+        const W = 600, H = 160, PAD = 12;
+        const vals = data.map(d => d.temp);
+        const min  = Math.min(...vals) - 1;
+        const max  = Math.max(...vals) + 1;
+        const range = max - min || 1;
 
-            const runAnalysis = async () => {
-                setLoading(true);
-                setError(null);
-                for (let i = 0; i < 4; i++) {
-                    setActiveStep(i);
-                    await new Promise(r => setTimeout(r, 400));
+        const px = (i) => PAD + (i / (data.length - 1)) * (W - PAD * 2);
+        const py = (v) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+
+        const points = data.map((d, i) => `${px(i)},${py(d.temp)}`).join(' ');
+        const polyline = `${PAD},${H - PAD} ` + points + ` ${px(data.length - 1)},${H - PAD}`;
+
+        return (
+            <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor="#3b82f6" stopOpacity="0.25"/>
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
+                    </linearGradient>
+                </defs>
+                <polygon points={polyline} fill="url(#grad)"/>
+                <polyline points={points} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"/>
+                {data.map((d, i) => (
+                    <circle key={i} cx={px(i)} cy={py(d.temp)} r="4" fill="#3b82f6"/>
+                ))}
+            </svg>
+        );
+    };
+
+    /* ── Main App ── */
+    const FIELDS = [
+        { key:"soc",     label:"SOC",     min:0, max:1,   step:0.01, init:0.85 },
+        { key:"soh",     label:"SOH",     min:0, max:1,   step:0.01, init:0.92 },
+        { key:"temp",    label:"TEMP °C", min:0, max:100, step:0.1,  init:28   },
+        { key:"current", label:"CURRENT", min:0, max:20,  step:0.1,  init:4.5  },
+    ];
+
+    const initInputs = Object.fromEntries(FIELDS.map(f => [f.key, f.init]));
+
+    const App = () => {
+        const [inputs,    setInputs]    = useState(initInputs);
+        const [loading,   setLoading]   = useState(false);
+        const [result,    setResult]    = useState(null);
+        const [history,   setHistory]   = useState([]);
+        const [error,     setError]     = useState(null);
+        const [resultKey, setResultKey] = useState(0);
+
+        const runAnalysis = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const res  = await fetch("/predict", {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify(inputs),
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    setResult(data);
+                    setResultKey(k => k + 1);
+                    setHistory(prev =>
+                        [...prev, {
+                            time: new Date().toLocaleTimeString().slice(0,5),
+                            temp: data.temperature,
+                        }].slice(-12)
+                    );
+                } else {
+                    setError(data.message || "Pipeline returned an error.");
                 }
-                try {
-                    const response = await fetch("/predict", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(inputs)
-                    });
-                    const data = await response.json();
-                    if (data.status === "success") {
-                        setResult(data);
-                        setResultKey(k => k + 1);
-                        setHistory(prev =>
-                            [...prev, { time: new Date().toLocaleTimeString().slice(3, 8), temp: data.temperature }].slice(-10)
-                        );
-                    } else {
-                        setError(data.message || "Pipeline returned an error.");
-                    }
-                } catch (e) {
-                    setError("Network error: " + e.message);
-                } finally {
-                    setLoading(false);
-                    setActiveStep(-1);
-                }
-            };
+            } catch (e) {
+                setError("Network error: " + e.message);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            return (
-                <div className="min-h-screen p-8 max-w-7xl mx-auto">
+        const safe = result?.decision === "SAFE";
 
-                    {/* Header */}
-                    <nav className="flex justify-between items-center mb-12">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center"
-                                style={{ boxShadow: "0 8px 32px rgba(59,130,246,0.3)" }}>
-                                <ZapIcon />
-                            </div>
-                            <h1 className="text-2xl font-bold tracking-tight uppercase">
-                                Sentinel <span className="text-blue-500 text-xs font-mono ml-2">v3</span>
-                            </h1>
+        return (
+            <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto">
+
+                {/* ── Header ── */}
+                <nav className="flex justify-between items-center mb-12">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center"
+                             style={{boxShadow:"0 8px 32px rgba(59,130,246,0.35)"}}>
+                            <ZapIcon/>
                         </div>
-                        <div className="text-xs font-bold text-green-500 bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
-                            SYSTEM ONLINE
-                        </div>
-                    </nav>
+                        <h1 className="text-2xl font-bold tracking-tight uppercase">
+                            Sentinel
+                            <span className="text-blue-500 text-xs font-mono ml-2">v3</span>
+                        </h1>
+                    </div>
+                    <span className="text-xs font-bold text-green-400 bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
+                        SYSTEM ONLINE
+                    </span>
+                </nav>
 
-                    <div className="grid lg:grid-cols-12 gap-8">
+                <div className="grid lg:grid-cols-12 gap-8">
 
-                        {/* LEFT PANEL */}
-                        <div className="lg:col-span-4 space-y-6">
-                            <div className="glass p-8 rounded-[32px]">
-                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-8 text-center">Telemetry</h3>
+                    {/* ── LEFT — Telemetry ── */}
+                    <div className="lg:col-span-4">
+                        <div className="glass p-8 rounded-[32px]">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-8 text-center">
+                                Telemetry
+                            </h3>
 
-                                {Object.keys(inputs).map((key) => (
-                                    <div key={key} className="mb-6">
-                                        <div className="flex justify-between mb-2 text-xs font-bold uppercase text-gray-500">
-                                            <label>{key}</label>
-                                            <span className="text-blue-400">{inputs[key]}</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max={key === 'temp' ? '100' : key === 'current' ? '20' : '1'}
-                                            step="0.01"
-                                            value={inputs[key]}
-                                            onChange={(e) => setInputs({ ...inputs, [key]: parseFloat(e.target.value) })}
-                                        />
+                            {FIELDS.map(f => (
+                                <div key={f.key} className="mb-6">
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-xs font-bold uppercase text-gray-500">{f.label}</label>
+                                        <span className="text-xs font-bold text-blue-400">{inputs[f.key]}</span>
                                     </div>
-                                ))}
-
-                                <button
-                                    onClick={runAnalysis}
-                                    disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-sm mt-4"
-                                    style={{ boxShadow: "0 4px 24px rgba(37,99,235,0.4)", cursor: loading ? "not-allowed" : "pointer" }}
-                                >
-                                    {loading ? "INITIALIZING..." : "RUN AI PIPELINE"}
-                                </button>
-
-                                {error && (
-                                    <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-                                        ⚠ {error}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* RIGHT PANEL */}
-                        <div className="lg:col-span-8">
-                            {!result ? (
-                                <div className="h-full glass rounded-[40px] flex items-center justify-center text-gray-600 min-h-[400px]">
-                                    <p>{loading ? "Running AI pipeline…" : "Ready for Data Stream"}</p>
+                                    <input
+                                        type="range"
+                                        min={f.min} max={f.max} step={f.step}
+                                        value={inputs[f.key]}
+                                        onChange={e => setInputs({...inputs, [f.key]: parseFloat(e.target.value)})}
+                                    />
                                 </div>
-                            ) : (
-                                <div key={resultKey} className="glass p-10 rounded-[40px] h-full fade-in">
+                            ))}
 
-                                    {/* Decision + Confidence */}
-                                    <div className="flex justify-between mb-10">
-                                        <div>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                                result.decision === 'SAFE'
-                                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                            }`}>
-                                                {result.decision}
-                                            </span>
-                                            <h2 className="text-4xl font-bold mt-4 leading-tight">{result.reason}</h2>
-                                        </div>
-                                        <div className="text-center bg-white/5 p-6 rounded-3xl border border-white/5 flex-shrink-0 ml-6">
-                                            <div className="text-5xl font-bold text-blue-500">
-                                                {(result.confidence * 100).toFixed(0)}%
-                                            </div>
-                                            <div className="text-xs text-gray-500 mt-2 uppercase tracking-widest">CONFIDENCE</div>
-                                        </div>
-                                    </div>
+                            <button
+                                onClick={runAnalysis}
+                                disabled={loading}
+                                className="w-full py-4 rounded-xl font-bold text-sm mt-4 transition-all"
+                                style={{
+                                    background: loading ? "#1e40af" : "#2563eb",
+                                    boxShadow: "0 4px 24px rgba(37,99,235,0.4)",
+                                    cursor: loading ? "not-allowed" : "pointer",
+                                    opacity: loading ? 0.8 : 1,
+                                }}
+                            >
+                                {loading ? "ANALYZING…" : "RUN AI PIPELINE"}
+                            </button>
 
-                                    {/* Temperature History Chart */}
-                                    <div className="h-64 w-full bg-black/20 rounded-3xl p-6 border border-white/5">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={history}>
-                                                <XAxis dataKey="time" hide />
-                                                <YAxis hide />
-                                                <Tooltip contentStyle={{ background: '#111', border: 'none', borderRadius: '12px', fontSize: '12px' }} />
-                                                <Area type="monotone" dataKey="temp" stroke="#3b82f6" fillOpacity={0.1} strokeWidth={4} />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
-                                    </div>
-
-                                    {/* Metric Cards */}
-                                    <div className="grid grid-cols-3 gap-6 mt-10">
-                                        {[
-                                            { l: 'SOC',  v: result.soc         },
-                                            { l: 'SOH',  v: result.soh         },
-                                            { l: 'TEMP', v: result.temperature },
-                                        ].map((s, i) => (
-                                            <div key={i} className="bg-white/5 p-5 rounded-2xl border border-white/5 text-center">
-                                                <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest">{s.l}</p>
-                                                <p className="text-2xl font-bold text-gray-200">{s.v.toFixed(3)}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-
+                            {error && (
+                                <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs leading-relaxed">
+                                    ⚠ {error}
                                 </div>
                             )}
                         </div>
-
                     </div>
-                </div>
-            );
-        };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                    {/* ── RIGHT — Results ── */}
+                    <div className="lg:col-span-8">
+                        {!result ? (
+                            <div className="glass rounded-[40px] flex items-center justify-center text-gray-600 text-sm"
+                                 style={{minHeight:"420px"}}>
+                                {loading ? "Running AI pipeline…" : "Ready for Data Stream"}
+                            </div>
+                        ) : (
+                            <div key={resultKey} className="glass p-10 rounded-[40px] fade-in">
+
+                                {/* Decision row */}
+                                <div className="flex justify-between items-start mb-10 gap-6">
+                                    <div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                                            safe
+                                                ? "bg-green-500/10 text-green-400 border-green-500/20"
+                                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                                        }`}>
+                                            {result.decision}
+                                        </span>
+                                        <h2 className="text-3xl font-bold mt-4 leading-tight text-gray-100">
+                                            {result.reason}
+                                        </h2>
+                                    </div>
+                                    <div className="text-center bg-white/5 p-6 rounded-3xl border border-white/5 flex-shrink-0">
+                                        <div className="text-5xl font-bold text-blue-500">
+                                            {(result.confidence * 100).toFixed(0)}%
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-2 uppercase tracking-widest">
+                                            Confidence
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Sparkline chart */}
+                                <div className="bg-black/20 rounded-3xl border border-white/5 p-4"
+                                     style={{height:"180px"}}>
+                                    <Sparkline data={history}/>
+                                </div>
+
+                                {/* Metric cards */}
+                                <div className="grid grid-cols-3 gap-6 mt-8">
+                                    {[
+                                        {l:"SOC",  v: result.soc},
+                                        {l:"SOH",  v: result.soh},
+                                        {l:"TEMP", v: result.temperature},
+                                    ].map((s,i) => (
+                                        <div key={i} className="bg-white/5 p-5 rounded-2xl border border-white/5 text-center">
+                                            <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest">{s.l}</p>
+                                            <p className="text-2xl font-bold text-gray-200">{s.v.toFixed(3)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                            </div>
+                        )}
+                    </div>
+
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
