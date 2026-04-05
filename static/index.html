@@ -1,559 +1,602 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS · Battery Intelligence Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <style>
-        :root {
-            --bg:       #050810;
-            --surface:  #0c1120;
-            --border:   rgba(99,179,237,0.12);
-            --accent:   #3b9eff;
-            --accent2:  #00e5c0;
-            --danger:   #ff4d6d;
-            --warn:     #ffc857;
-            --text:     #e8f0fe;
-            --muted:    #4a5568;
-            --mono:     'Space Mono', monospace;
-            --display:  'Syne', sans-serif;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: var(--display);
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Grid background */
-        body::before {
-            content: '';
-            position: fixed; inset: 0; z-index: 0;
-            background-image:
-                linear-gradient(rgba(59,158,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59,158,255,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-        }
-
-        /* Glow orbs */
-        body::after {
-            content: '';
-            position: fixed; inset: 0; z-index: 0;
-            background:
-                radial-gradient(ellipse 600px 400px at 10% 20%, rgba(59,158,255,0.06) 0%, transparent 70%),
-                radial-gradient(ellipse 500px 300px at 90% 80%, rgba(0,229,192,0.05) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        #root { position: relative; z-index: 1; }
-
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(59,158,255,0.4), transparent);
-        }
-
-        /* Custom range slider */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%; height: 4px;
-            background: rgba(99,179,237,0.15);
-            border-radius: 2px;
-            outline: none;
-            cursor: pointer;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 12px rgba(59,158,255,0.6);
-            cursor: pointer;
-            transition: transform 0.15s;
-        }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
-        input[type=range]::-moz-range-thumb {
-            width: 16px; height: 16px; border: none;
-            border-radius: 50%; background: var(--accent);
-            box-shadow: 0 0 12px rgba(59,158,255,0.6);
-            cursor: pointer;
-        }
-
-        /* Gauge arc */
-        .gauge-track { fill: none; stroke: rgba(99,179,237,0.1); stroke-width: 8; }
-        .gauge-fill  { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1); }
-
-        /* Pulse dot */
-        @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.8); } }
-        .pulse { animation: pulse 2s infinite; }
-
-        /* Scan line */
-        @keyframes scan { 0% { top: -2px; } 100% { top: 100%; } }
-        .scan-line {
-            position: absolute; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(59,158,255,0.6), transparent);
-            animation: scan 3s linear infinite;
-            pointer-events: none;
-        }
-
-        /* Fade in result */
-        @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        .slide-up { animation: slideUp 0.5s cubic-bezier(.4,0,.2,1) forwards; }
-
-        /* Status badge */
-        .badge-safe   { background:rgba(0,229,192,0.1); color:#00e5c0; border:1px solid rgba(0,229,192,0.25); }
-        .badge-danger { background:rgba(255,77,109,0.1); color:#ff4d6d; border:1px solid rgba(255,77,109,0.25); }
-
-        /* Loader bars */
-        @keyframes bar { 0%,100% { transform:scaleY(0.4); } 50% { transform:scaleY(1); } }
-        .loader-bar { display:inline-block; width:3px; height:18px; background:var(--accent); border-radius:2px; margin:0 2px; }
-        .loader-bar:nth-child(1) { animation: bar 0.9s ease-in-out infinite 0.0s; }
-        .loader-bar:nth-child(2) { animation: bar 0.9s ease-in-out infinite 0.15s; }
-        .loader-bar:nth-child(3) { animation: bar 0.9s ease-in-out infinite 0.30s; }
-        .loader-bar:nth-child(4) { animation: bar 0.9s ease-in-out infinite 0.45s; }
-        .loader-bar:nth-child(5) { animation: bar 0.9s ease-in-out infinite 0.60s; }
-
-        .mono { font-family: var(--mono); }
-    </style>
-</head>
-<body>
-<div id="root"></div>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMS · Battery Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+<style>
+:root {
+  --bg:         #09090b;
+  --surface:    #111113;
+  --surface2:   #18181b;
+  --border:     #27272a;
+  --border2:    #3f3f46;
+  --text:       #fafafa;
+  --muted:      #71717a;
+  --muted2:     #52525b;
+  --accent:     #e4e4e7;
+  --green:      #4ade80;
+  --green-dim:  rgba(74,222,128,0.1);
+  --green-ring: rgba(74,222,128,0.25);
+  --red:        #f87171;
+  --red-dim:    rgba(248,113,113,0.1);
+  --red-ring:   rgba(248,113,113,0.25);
+  --blue:       #60a5fa;
+  --blue-dim:   rgba(96,165,250,0.08);
+  --mono:       'DM Mono', monospace;
+  --serif:      'Instrument Serif', serif;
+  --sans:       'Geist', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle noise texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Divider lines */
+.hr { border: none; border-top: 1px solid var(--border); }
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 6px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.badge-safe   { background: var(--green-dim); color: var(--green);  border: 1px solid var(--green-ring); }
+.badge-danger { background: var(--red-dim);   color: var(--red);    border: 1px solid var(--red-ring);   }
+.badge-neutral{ background: var(--surface2);  color: var(--muted);  border: 1px solid var(--border); }
+
+/* Range slider — clean shadcn style */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 2px;
+  background: var(--border2);
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--border2);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+input[type=range]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 3px rgba(250,250,250,0.15);
+  transform: scale(1.15);
+}
+input[type=range]::-moz-range-thumb {
+  width: 14px; height: 14px; border: 2px solid var(--bg);
+  border-radius: 50%; background: var(--text); cursor: pointer;
+}
+
+/* Progress bar track */
+.progress-track { height: 2px; background: var(--border2); border-radius: 1px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 1px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+
+/* Button */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 20px;
+  background: var(--text); color: var(--bg);
+  border: none; border-radius: 8px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  letter-spacing: -0.01em; cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Loader dots */
+@keyframes blink { 0%,100%{opacity:0.2} 50%{opacity:1} }
+.dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.dot:nth-child(1){animation:blink 1.2s ease infinite 0.0s}
+.dot:nth-child(2){animation:blink 1.2s ease infinite 0.2s}
+.dot:nth-child(3){animation:blink 1.2s ease infinite 0.4s}
+
+/* Animations */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.fade-up { animation: fadeUp 0.45s cubic-bezier(.4,0,.2,1) both; }
+
+@keyframes pulseGreen { 0%,100%{opacity:1} 50%{opacity:0.45} }
+.pulse-green { animation: pulseGreen 2.5s ease infinite; }
+
+/* Sparkline tooltip */
+.spark-tooltip {
+  position: absolute;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--text);
+  pointer-events: none; white-space: nowrap;
+  transform: translate(-50%, -120%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
-/* ── Arc Gauge ── */
-const ArcGauge = ({ value, max = 1, color = '#3b9eff', label, unit = '' }) => {
-    const r = 54, cx = 64, cy = 64;
-    const startAngle = -220, sweepAngle = 260;
-    const toRad = d => d * Math.PI / 180;
-    const pct = Math.min(Math.max(value / max, 0), 1);
-    const circumference = r * toRad(sweepAngle);
-    const offset = circumference * (1 - pct);
-
-    const arcPath = (angle1, angle2) => {
-        const a1 = toRad(angle1), a2 = toRad(angle2);
-        const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
-        const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
-        const large = sweepAngle > 180 ? 1 : 0;
-        return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
-    };
-
-    return (
-        <div style={{ textAlign: 'center' }}>
-            <svg width="128" height="128" viewBox="0 0 128 128">
-                <path className="gauge-track" d={arcPath(startAngle, startAngle + sweepAngle)} />
-                <path
-                    className="gauge-fill"
-                    d={arcPath(startAngle, startAngle + sweepAngle)}
-                    stroke={color}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    style={{ filter: `drop-shadow(0 0 6px ${color}88)` }}
-                />
-                <text x="64" y="60" textAnchor="middle" fill={color}
-                      style={{ fontFamily: "'Space Mono',monospace", fontSize: '16px', fontWeight: 700 }}>
-                    {(value * (max === 1 ? 100 : 1)).toFixed(max === 1 ? 0 : 1)}
-                </text>
-                <text x="64" y="76" textAnchor="middle" fill="rgba(255,255,255,0.3)"
-                      style={{ fontFamily: "'Space Mono',monospace", fontSize: '9px' }}>
-                    {max === 1 ? '%' : unit}
-                </text>
-            </svg>
-            <p style={{ fontFamily: "'Syne',sans-serif", fontSize: '10px', fontWeight: 700,
-                        letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', marginTop: '-8px' }}>
-                {label}
-            </p>
-        </div>
-    );
-};
-
-/* ── Sparkline ── */
-const Sparkline = ({ data }) => {
-    if (!data || data.length < 2) return (
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center',
-                      height:'100%', color:'var(--muted)', fontSize:'12px', fontFamily:'var(--mono)' }}>
-            NO DATA YET
-        </div>
-    );
-
-    const W = 500, H = 100, P = 10;
-    const vals = data.map(d => d.temp);
-    const min = Math.min(...vals) - 0.5, max = Math.max(...vals) + 0.5;
-    const range = max - min || 1;
-    const px = i  => P + (i / (data.length - 1)) * (W - P * 2);
-    const py = v  => H - P - ((v - min) / range) * (H - P * 2);
-    const pts = data.map((d, i) => `${px(i)},${py(d.temp)}`).join(' ');
-    const fill = `${P},${H - P} ` + pts + ` ${px(data.length-1)},${H - P}`;
-
-    return (
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none">
-            <defs>
-                <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#3b9eff" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="#3b9eff" stopOpacity="0"/>
-                </linearGradient>
-            </defs>
-            <polygon points={fill} fill="url(#sg)" />
-            <polyline points={pts} fill="none" stroke="#3b9eff" strokeWidth="2.5"
-                      strokeLinejoin="round" strokeLinecap="round"
-                      style={{ filter:'drop-shadow(0 0 4px #3b9eff88)' }}/>
-            {data.map((d, i) => (
-                <circle key={i} cx={px(i)} cy={py(d.temp)} r="3.5"
-                        fill="#3b9eff" style={{ filter:'drop-shadow(0 0 4px #3b9effcc)' }}/>
-            ))}
-        </svg>
-    );
-};
-
-/* ── Stat Card ── */
-const StatCard = ({ label, value, unit, color = '#3b9eff', icon }) => (
-    <div className="panel" style={{ padding:'20px 24px' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-            <div>
-                <p style={{ fontFamily:'var(--mono)', fontSize:'9px', letterSpacing:'0.15em',
-                            color:'var(--muted)', marginBottom:'8px' }}>{label}</p>
-                <p style={{ fontFamily:'var(--mono)', fontSize:'22px', fontWeight:700, color }}>
-                    {value}<span style={{ fontSize:'11px', marginLeft:'4px', color:'var(--muted)' }}>{unit}</span>
-                </p>
-            </div>
-            <div style={{ width:'36px', height:'36px', borderRadius:'10px', display:'flex',
-                          alignItems:'center', justifyContent:'center',
-                          background:`${color}18`, border:`1px solid ${color}30`, fontSize:'16px' }}>
-                {icon}
-            </div>
-        </div>
+/* ─────────────────────────── SPARKLINE ─────────────────────────── */
+const Sparkline = ({ data, color = '#60a5fa' }) => {
+  const [tooltip, setTooltip] = useState(null);
+  if (!data || data.length < 2) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',
+                 height:'100%',fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)'}}>
+      — no readings yet —
     </div>
+  );
+
+  const W = 600, H = 80, P = 8;
+  const vals = data.map(d => d.temp);
+  const mn = Math.min(...vals) - 0.3, mx = Math.max(...vals) + 0.3;
+  const rng = mx - mn || 1;
+  const px = i => P + (i / (data.length - 1)) * (W - P * 2);
+  const py = v => H - P - ((v - mn) / rng) * (H - P * 2);
+  const pts = data.map((d,i) => `${px(i).toFixed(1)},${py(d.temp).toFixed(1)}`).join(' ');
+  const area = `${P},${H-P} ${pts} ${px(data.length-1).toFixed(1)},${H-P}`;
+
+  return (
+    <div style={{position:'relative',width:'100%',height:'100%'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none"
+           style={{display:'block'}}>
+        <defs>
+          <linearGradient id="spg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.18"/>
+            <stop offset="100%" stopColor={color} stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon points={area} fill="url(#spg)"/>
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5"
+                  strokeLinejoin="round" strokeLinecap="round"/>
+        {data.map((d,i) => (
+          <circle key={i} cx={px(i)} cy={py(d.temp)} r="2.5"
+                  fill={color} opacity="0.8"/>
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+/* ─────────────────────────── GAUGE BAR ─────────────────────────── */
+const GaugeBar = ({ label, value, max = 1, color, format }) => {
+  const pct = Math.min(Math.max(value / max, 0), 1) * 100;
+  const display = format ? format(value) : `${(value*100).toFixed(1)}%`;
+  return (
+    <div style={{marginBottom:'20px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'8px'}}>
+        <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',letterSpacing:'0.05em'}}>
+          {label}
+        </span>
+        <span style={{fontFamily:'var(--mono)',fontSize:'13px',fontWeight:500,color}}>
+          {display}
+        </span>
+      </div>
+      <div className="progress-track">
+        <div className="progress-fill" style={{width:`${pct}%`, background:color}}/>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────── SLIDER ─────────────────────────── */
+const Slider = ({ label, value, min, max, step, unit, onChange }) => (
+  <div style={{marginBottom:'22px'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+      <label style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',letterSpacing:'0.04em'}}>
+        {label}
+      </label>
+      <span style={{fontFamily:'var(--mono)',fontSize:'12px',fontWeight:500,
+                    color:'var(--text)',background:'var(--surface2)',
+                    padding:'2px 9px',borderRadius:'5px',border:'1px solid var(--border)'}}>
+        {value}{unit}
+      </span>
+    </div>
+    <input type="range" min={min} max={max} step={step} value={value}
+           onChange={e => onChange(parseFloat(e.target.value))}/>
+  </div>
 );
 
-/* ── Slider Input ── */
-const SliderInput = ({ label, value, min, max, step, onChange, unit }) => {
-    const pct = ((value - min) / (max - min)) * 100;
-    return (
-        <div style={{ marginBottom:'24px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center' }}>
-                <span style={{ fontFamily:'var(--mono)', fontSize:'10px', letterSpacing:'0.12em',
-                               color:'rgba(255,255,255,0.4)', fontWeight:700 }}>{label}</span>
-                <span style={{ fontFamily:'var(--mono)', fontSize:'13px', color:'var(--accent)',
-                               fontWeight:700, background:'rgba(59,158,255,0.08)',
-                               padding:'2px 10px', borderRadius:'6px', border:'1px solid rgba(59,158,255,0.2)' }}>
-                    {value}{unit}
+/* ─────────────────────────── STAT TILE ─────────────────────────── */
+const Tile = ({ label, value, sub, color = 'var(--text)' }) => (
+  <div className="card" style={{padding:'20px 22px'}}>
+    <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',
+               letterSpacing:'0.06em',marginBottom:'10px',textTransform:'uppercase'}}>
+      {label}
+    </p>
+    <p style={{fontFamily:'var(--mono)',fontSize:'20px',fontWeight:500,color,lineHeight:1}}>
+      {value}
+    </p>
+    {sub && <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',marginTop:'6px'}}>
+      {sub}
+    </p>}
+  </div>
+);
+
+/* ─────────────────────────── MAIN APP ─────────────────────────── */
+const FIELDS = [
+  {key:'soc',      label:'State of Charge',  min:0,   max:1,  step:0.01, unit:'',   init:0.85},
+  {key:'soh',      label:'State of Health',  min:0,   max:1,  step:0.01, unit:'',   init:0.92},
+  {key:'temp_C',   label:'Temperature',      min:-20, max:80, step:0.5,  unit:'°C', init:28  },
+  {key:'current_A',label:'Current',          min:0,   max:20, step:0.1,  unit:' A', init:4.5 },
+];
+
+const initInputs = Object.fromEntries(FIELDS.map(f => [f.key, f.init]));
+
+export default function App() {
+  const [inputs,  setInputs]  = useState(initInputs);
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState(null);
+  const [history, setHistory] = useState([]);
+  const [error,   setError]   = useState(null);
+  const [rKey,    setRKey]    = useState(0);
+  const [clock,   setClock]   = useState('');
+
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString('en-GB', {hour12:false}));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const set = (k, v) => setInputs(p => ({...p, [k]: v}));
+
+  const run = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res  = await fetch('/predict', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(inputs),
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setResult(data); setRKey(k => k+1);
+        setHistory(h => [...h,{
+          time: new Date().toLocaleTimeString('en-GB',{hour12:false}).slice(0,5),
+          temp: data.temperature,
+        }].slice(-16));
+      } else {
+        setError(data.message || 'Pipeline error');
+      }
+    } catch(e) { setError('Network: ' + e.message); }
+    finally { setLoading(false); }
+  };
+
+  const safe = result?.decision === 'SAFE';
+
+  return (
+    <div style={{maxWidth:'1280px',margin:'0 auto',padding:'0 24px 48px'}}>
+
+      {/* ── TOP BAR ── */}
+      <header style={{
+        display:'flex', justifyContent:'space-between', alignItems:'center',
+        padding:'20px 0 20px',
+        borderBottom:'1px solid var(--border)',
+        marginBottom:'32px',
+      }}>
+        <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
+          {/* Battery icon */}
+          <div style={{
+            width:'36px',height:'36px',borderRadius:'8px',
+            background:'var(--surface2)',border:'1px solid var(--border)',
+            display:'flex',alignItems:'center',justifyContent:'center',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--text)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="18" height="11" rx="2"/>
+              <path d="M22 11v3"/><path d="M6 11h5m0 0v-2m0 2v2"/>
+            </svg>
+          </div>
+          <div>
+            <h1 style={{fontFamily:'var(--sans)',fontSize:'15px',fontWeight:600,
+                        letterSpacing:'-0.02em',lineHeight:1}}>
+              Battery Management System
+            </h1>
+            <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',marginTop:'3px'}}>
+              AI Inference Pipeline · v3
+            </p>
+          </div>
+        </div>
+
+        <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
+          <span style={{fontFamily:'var(--mono)',fontSize:'12px',color:'var(--muted)'}}>
+            {clock}
+          </span>
+          <div style={{display:'flex',alignItems:'center',gap:'7px',
+                       padding:'6px 13px',borderRadius:'6px',
+                       background:'var(--surface2)',border:'1px solid var(--border)'}}>
+            <span className="pulse-green" style={{
+              width:'6px',height:'6px',borderRadius:'50%',
+              background:'var(--green)',display:'block',flexShrink:0,
+            }}/>
+            <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',
+                          letterSpacing:'0.04em'}}>
+              online
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── PAGE TITLE ── */}
+      <div style={{marginBottom:'36px'}}>
+        <h2 style={{
+          fontFamily:'var(--serif)', fontSize:'42px', fontWeight:400,
+          letterSpacing:'-0.02em', lineHeight:1.1, color:'var(--text)',
+        }}>
+          Cell Analytics&nbsp;
+          <em style={{color:'var(--muted)'}}>Dashboard</em>
+        </h2>
+        <p style={{fontFamily:'var(--sans)',fontSize:'13px',color:'var(--muted)',
+                   marginTop:'10px',maxWidth:'480px',lineHeight:'1.6'}}>
+          Configure battery telemetry parameters and run the multi-agent neural pipeline
+          to receive real-time health predictions and policy recommendations.
+        </p>
+      </div>
+
+      {/* ── MAIN LAYOUT ── */}
+      <div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:'20px',alignItems:'start'}}>
+
+        {/* ── LEFT: Controls ── */}
+        <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+
+          <div className="card" style={{padding:'24px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                         marginBottom:'24px',paddingBottom:'16px',borderBottom:'1px solid var(--border)'}}>
+              <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',
+                            letterSpacing:'0.06em',textTransform:'uppercase'}}>
+                Parameters
+              </span>
+              <button onClick={() => setInputs(initInputs)}
+                      style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',
+                               background:'none',border:'none',cursor:'pointer',
+                               padding:'2px 0',transition:'color 0.15s'}}
+                      onMouseOver={e=>e.target.style.color='var(--text)'}
+                      onMouseOut={e=>e.target.style.color='var(--muted)'}>
+                reset
+              </button>
+            </div>
+
+            {FIELDS.map(f => (
+              <Slider key={f.key} label={f.label} value={inputs[f.key]}
+                min={f.min} max={f.max} step={f.step} unit={f.unit}
+                onChange={v => set(f.key, v)}/>
+            ))}
+
+            <button className="btn-primary" onClick={run} disabled={loading}
+                    style={{marginTop:'8px'}}>
+              {loading ? (
+                <>
+                  <span className="dot"/><span className="dot"/><span className="dot"/>
+                  <span style={{marginLeft:'6px',fontSize:'13px'}}>Analyzing</span>
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  Run Pipeline
+                </>
+              )}
+            </button>
+
+            {error && (
+              <div style={{marginTop:'14px',padding:'12px 14px',borderRadius:'8px',
+                           background:'var(--red-dim)',border:'1px solid var(--red-ring)',
+                           fontFamily:'var(--mono)',fontSize:'11px',color:'var(--red)',
+                           lineHeight:'1.65',wordBreak:'break-word'}}>
+                {error}
+              </div>
+            )}
+          </div>
+
+          {/* Input summary */}
+          <div className="card" style={{padding:'20px 24px'}}>
+            <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',
+                       letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:'16px'}}>
+              Current Inputs
+            </p>
+            {FIELDS.map(f => (
+              <div key={f.key} style={{display:'flex',justifyContent:'space-between',
+                                       alignItems:'center',padding:'7px 0',
+                                       borderBottom:'1px solid var(--border)'}}>
+                <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)'}}>
+                  {f.label}
                 </span>
-            </div>
-            <div style={{ position:'relative' }}>
-                <div style={{
-                    position:'absolute', top:'50%', left:0, transform:'translateY(-50%)',
-                    height:'4px', width:`${pct}%`, background:'var(--accent)',
-                    borderRadius:'2px', pointerEvents:'none',
-                    boxShadow:'0 0 8px rgba(59,158,255,0.5)'
-                }}/>
-                <input type="range" min={min} max={max} step={step} value={value}
-                       onChange={e => onChange(parseFloat(e.target.value))} />
-            </div>
+                <span style={{fontFamily:'var(--mono)',fontSize:'12px',fontWeight:500,color:'var(--text)'}}>
+                  {inputs[f.key]}{f.unit}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-    );
-};
 
-/* ── Main App ── */
-const App = () => {
-    const [inputs, setInputs] = useState({ soc: 0.85, soh: 0.92, temp_C: 28, current: 4.5 });
-    const [loading, setLoading]   = useState(false);
-    const [result,  setResult]    = useState(null);
-    const [history, setHistory]   = useState([]);
-    const [error,   setError]     = useState(null);
-    const [key,     setKey]       = useState(0);
-    const [time,    setTime]      = useState(new Date());
-
-    useEffect(() => {
-        const t = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(t);
-    }, []);
-
-    const set = (k, v) => setInputs(p => ({ ...p, [k]: v }));
-
-    const runAnalysis = async () => {
-        setLoading(true); setError(null);
-        try {
-            const res  = await fetch('/predict', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(inputs),
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                setResult(data); setKey(k => k + 1);
-                setHistory(h => [...h, {
-                    time: new Date().toLocaleTimeString().slice(0, 5),
-                    temp: data.temperature,
-                }].slice(-14));
-            } else {
-                setError(data.message || 'Pipeline error');
-            }
-        } catch (e) { setError('Network error: ' + e.message); }
-        finally { setLoading(false); }
-    };
-
-    const safe = result?.decision === 'SAFE';
-
-    return (
-        <div style={{ maxWidth:'1400px', margin:'0 auto', padding:'28px 28px' }}>
-
-            {/* ── TOP NAV ── */}
-            <header style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'32px' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
-                    <div style={{
-                        width:'48px', height:'48px', borderRadius:'14px',
-                        background:'linear-gradient(135deg, #1a3a6e, #0c1e40)',
-                        border:'1px solid rgba(59,158,255,0.3)',
-                        display:'flex', alignItems:'center', justifyContent:'center',
-                        boxShadow:'0 0 24px rgba(59,158,255,0.2)'
-                    }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                             stroke="#3b9eff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="2" y="7" width="18" height="11" rx="2"/>
-                            <path d="M22 11v3"/>
-                            <path d="M7 7V5a2 2 0 0 1 4 0v2"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 style={{ fontFamily:'var(--display)', fontSize:'20px', fontWeight:800,
-                                     letterSpacing:'-0.02em', lineHeight:1 }}>
-                            Battery Management System
-                        </h1>
-                        <p style={{ fontFamily:'var(--mono)', fontSize:'9px', color:'var(--muted)',
-                                    letterSpacing:'0.1em', marginTop:'4px' }}>
-                            INTELLIGENT CELL ANALYTICS · AI PIPELINE v3
-                        </p>
-                    </div>
-                </div>
-
-                <div style={{ display:'flex', alignItems:'center', gap:'20px' }}>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:'11px', color:'var(--muted)' }}>
-                        {time.toLocaleTimeString()}
-                    </span>
-                    <div style={{ display:'flex', alignItems:'center', gap:'8px',
-                                  background:'rgba(0,229,192,0.07)', border:'1px solid rgba(0,229,192,0.2)',
-                                  padding:'8px 16px', borderRadius:'100px' }}>
-                        <span className="pulse" style={{ width:'7px', height:'7px', borderRadius:'50%',
-                                                          background:'var(--accent2)', display:'inline-block' }}/>
-                        <span style={{ fontFamily:'var(--mono)', fontSize:'10px', color:'var(--accent2)',
-                                       fontWeight:700, letterSpacing:'0.1em' }}>
-                            SYSTEM ONLINE
-                        </span>
-                    </div>
-                </div>
-            </header>
-
-            {/* ── MAIN GRID ── */}
-            <div style={{ display:'grid', gridTemplateColumns:'340px 1fr', gap:'20px', alignItems:'start' }}>
-
-                {/* ── LEFT COLUMN ── */}
-                <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
-
-                    {/* Input Panel */}
-                    <div className="panel" style={{ padding:'28px' }}>
-                        <div className="scan-line"/>
-                        <p style={{ fontFamily:'var(--mono)', fontSize:'9px', letterSpacing:'0.2em',
-                                    color:'var(--muted)', marginBottom:'24px', fontWeight:700 }}>
-                            ◈ INPUT TELEMETRY
-                        </p>
-
-                        <SliderInput label="STATE OF CHARGE" value={inputs.soc}
-                            min={0} max={1} step={0.01} unit=""
-                            onChange={v => set('soc', v)} />
-                        <SliderInput label="STATE OF HEALTH" value={inputs.soh}
-                            min={0} max={1} step={0.01} unit=""
-                            onChange={v => set('soh', v)} />
-                        <SliderInput label="TEMPERATURE" value={inputs.temp_C}
-                            min={-20} max={80} step={0.5} unit="°C"
-                            onChange={v => set('temp_C', v)} />
-                        <SliderInput label="CURRENT" value={inputs.current}
-                            min={0} max={20} step={0.1} unit="A"
-                            onChange={v => set('current', v)} />
-
-                        <button
-                            onClick={runAnalysis}
-                            disabled={loading}
-                            style={{
-                                width:'100%', padding:'16px', marginTop:'8px',
-                                background: loading
-                                    ? 'rgba(59,158,255,0.1)'
-                                    : 'linear-gradient(135deg, #1a5fff, #0d3bcc)',
-                                border: '1px solid rgba(59,158,255,0.4)',
-                                borderRadius:'12px',
-                                color:'white', fontFamily:'var(--mono)', fontSize:'12px',
-                                fontWeight:700, letterSpacing:'0.12em',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                boxShadow: loading ? 'none' : '0 0 32px rgba(59,158,255,0.25)',
-                                transition:'all 0.2s',
-                                display:'flex', alignItems:'center', justifyContent:'center', gap:'10px'
-                            }}
-                        >
-                            {loading ? (
-                                <>
-                                    <span className="loader-bar"/><span className="loader-bar"/>
-                                    <span className="loader-bar"/><span className="loader-bar"/>
-                                    <span className="loader-bar"/>
-                                </>
-                            ) : (
-                                <>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" strokeWidth="2.5">
-                                        <polygon points="5 3 19 12 5 21 5 3"/>
-                                    </svg>
-                                    RUN AI PIPELINE
-                                </>
-                            )}
-                        </button>
-
-                        {error && (
-                            <div style={{ marginTop:'16px', padding:'14px 16px', borderRadius:'10px',
-                                          background:'rgba(255,77,109,0.08)', border:'1px solid rgba(255,77,109,0.25)',
-                                          color:'#ff4d6d', fontFamily:'var(--mono)', fontSize:'11px',
-                                          lineHeight:'1.6' }}>
-                                ⚠ {error}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Input summary cards */}
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                        <StatCard label="SOC INPUT" value={(inputs.soc*100).toFixed(0)} unit="%" color="#3b9eff" icon="⚡"/>
-                        <StatCard label="SOH INPUT" value={(inputs.soh*100).toFixed(0)} unit="%" color="#00e5c0" icon="🔬"/>
-                        <StatCard label="TEMP" value={inputs.temp_C} unit="°C" color="#ffc857" icon="🌡"/>
-                        <StatCard label="CURRENT" value={inputs.current} unit="A" color="#b06cff" icon="⚙"/>
-                    </div>
-                </div>
-
-                {/* ── RIGHT COLUMN ── */}
-                <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
-
-                    {!result ? (
-                        <div className="panel" style={{
-                            minHeight:'500px', display:'flex', flexDirection:'column',
-                            alignItems:'center', justifyContent:'center', gap:'16px'
-                        }}>
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-                                 stroke="rgba(99,179,237,0.2)" strokeWidth="1.5">
-                                <rect x="2" y="7" width="18" height="11" rx="2"/>
-                                <path d="M22 11v3"/><path d="M7 7V5a2 2 0 0 1 4 0v2"/>
-                            </svg>
-                            <p style={{ fontFamily:'var(--mono)', fontSize:'11px',
-                                        color:'var(--muted)', letterSpacing:'0.15em' }}>
-                                {loading ? 'RUNNING NEURAL PIPELINE…' : 'AWAITING DATA STREAM'}
-                            </p>
-                        </div>
-                    ) : (
-                        <div key={key} className="slide-up" style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
-
-                            {/* Decision Banner */}
-                            <div className="panel" style={{ padding:'28px 32px', position:'relative', overflow:'hidden' }}>
-                                <div style={{
-                                    position:'absolute', top:0, left:0, bottom:0, width:'4px',
-                                    background: safe ? 'var(--accent2)' : 'var(--danger)',
-                                    boxShadow: `0 0 20px ${safe ? 'var(--accent2)' : 'var(--danger)'}`
-                                }}/>
-                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                    <div>
-                                        <span className={safe ? 'badge-safe' : 'badge-danger'}
-                                              style={{ fontFamily:'var(--mono)', fontSize:'10px', fontWeight:700,
-                                                       letterSpacing:'0.15em', padding:'5px 14px', borderRadius:'100px' }}>
-                                            {result.decision}
-                                        </span>
-                                        <h2 style={{ fontFamily:'var(--display)', fontSize:'26px', fontWeight:800,
-                                                     marginTop:'12px', letterSpacing:'-0.02em',
-                                                     color: safe ? 'var(--accent2)' : 'var(--danger)' }}>
-                                            {result.reason}
-                                        </h2>
-                                        <p style={{ fontFamily:'var(--mono)', fontSize:'10px', color:'var(--muted)',
-                                                    marginTop:'8px', letterSpacing:'0.08em' }}>
-                                            POLICY ID: {result.policy_id} &nbsp;·&nbsp; {new Date().toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div style={{ textAlign:'center' }}>
-                                        <div style={{ fontFamily:'var(--mono)', fontSize:'48px', fontWeight:700,
-                                                      color: safe ? 'var(--accent2)' : 'var(--danger)',
-                                                      lineHeight:1,
-                                                      textShadow: `0 0 30px ${safe ? 'rgba(0,229,192,0.4)' : 'rgba(255,77,109,0.4)'}` }}>
-                                            {(result.confidence * 100).toFixed(0)}
-                                            <span style={{ fontSize:'18px' }}>%</span>
-                                        </div>
-                                        <p style={{ fontFamily:'var(--mono)', fontSize:'9px', color:'var(--muted)',
-                                                    letterSpacing:'0.15em', marginTop:'6px' }}>
-                                            CONFIDENCE
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Gauges Row */}
-                            <div className="panel" style={{ padding:'28px' }}>
-                                <p style={{ fontFamily:'var(--mono)', fontSize:'9px', letterSpacing:'0.2em',
-                                            color:'var(--muted)', marginBottom:'20px', fontWeight:700 }}>
-                                    ◈ OUTPUT METRICS
-                                </p>
-                                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'16px' }}>
-                                    <ArcGauge value={result.soc}         max={1}   color="#3b9eff"  label="SOC"  />
-                                    <ArcGauge value={result.soh}         max={1}   color="#00e5c0"  label="SOH"  />
-                                    <ArcGauge value={result.temperature} max={80}  color="#ffc857"  label="TEMP" unit="°C"/>
-                                </div>
-                            </div>
-
-                            {/* Chart */}
-                            <div className="panel" style={{ padding:'28px' }}>
-                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
-                                    <p style={{ fontFamily:'var(--mono)', fontSize:'9px', letterSpacing:'0.2em',
-                                                color:'var(--muted)', fontWeight:700 }}>
-                                        ◈ TEMPERATURE HISTORY
-                                    </p>
-                                    <span style={{ fontFamily:'var(--mono)', fontSize:'9px', color:'var(--accent)',
-                                                   background:'rgba(59,158,255,0.08)', padding:'3px 10px',
-                                                   borderRadius:'6px', border:'1px solid rgba(59,158,255,0.2)' }}>
-                                        {history.length} READINGS
-                                    </span>
-                                </div>
-                                <div style={{ height:'120px' }}>
-                                    <Sparkline data={history}/>
-                                </div>
-                            </div>
-
-                            {/* Detail cards */}
-                            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'14px' }}>
-                                <StatCard label="OUTPUT SOC"  value={(result.soc * 100).toFixed(1)}    unit="%" color="#3b9eff"  icon="⚡"/>
-                                <StatCard label="OUTPUT SOH"  value={(result.soh * 100).toFixed(1)}    unit="%" color="#00e5c0"  icon="🔬"/>
-                                <StatCard label="TEMPERATURE" value={result.temperature.toFixed(2)}    unit="°C" color="#ffc857" icon="🌡"/>
-                            </div>
-
-                        </div>
-                    )}
-                </div>
+        {/* ── RIGHT: Results ── */}
+        <div>
+          {!result ? (
+            <div className="card" style={{
+              minHeight:'520px',display:'flex',flexDirection:'column',
+              alignItems:'center',justifyContent:'center',gap:'12px',
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                   stroke="var(--border2)" strokeWidth="1.2" strokeLinecap="round">
+                <rect x="2" y="7" width="18" height="11" rx="2"/>
+                <path d="M22 11v3"/>
+              </svg>
+              <p style={{fontFamily:'var(--mono)',fontSize:'12px',color:'var(--muted)',
+                         letterSpacing:'0.06em'}}>
+                {loading ? 'running neural pipeline…' : 'no analysis yet'}
+              </p>
             </div>
+          ) : (
+            <div key={rKey} className="fade-up" style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+
+              {/* Decision card */}
+              <div className="card" style={{padding:'28px 32px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',
+                             alignItems:'flex-start',gap:'24px'}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
+                      <span className={safe?'badge badge-safe':'badge badge-danger'}>
+                        <span style={{width:'5px',height:'5px',borderRadius:'50%',
+                                      background:'currentColor',display:'inline-block'}}/>
+                        {result.decision}
+                      </span>
+                      <span className="badge badge-neutral">Policy {result.policy_id}</span>
+                    </div>
+                    <h3 style={{fontFamily:'var(--serif)',fontSize:'28px',fontWeight:400,
+                                letterSpacing:'-0.02em',lineHeight:1.2,
+                                color: safe ? 'var(--green)' : 'var(--red)'}}>
+                      {result.reason}
+                    </h3>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',
+                               marginTop:'10px'}}>
+                      {new Date().toLocaleString()}
+                    </p>
+                  </div>
+
+                  {/* Confidence */}
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',
+                               letterSpacing:'0.06em',marginBottom:'6px'}}>CONFIDENCE</p>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'44px',fontWeight:500,lineHeight:1,
+                               color: safe ? 'var(--green)' : 'var(--red)'}}>
+                      {(result.confidence * 100).toFixed(0)}
+                      <span style={{fontSize:'18px',fontWeight:400}}>%</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gauge bars */}
+              <div className="card" style={{padding:'24px 28px'}}>
+                <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',
+                           letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:'20px'}}>
+                  Output Metrics
+                </p>
+                <GaugeBar label="State of Charge (SOC)" value={result.soc} max={1}
+                          color="var(--blue)"/>
+                <GaugeBar label="State of Health (SOH)" value={result.soh} max={1}
+                          color="var(--green)"/>
+                <GaugeBar label="Temperature" value={result.temperature} max={80}
+                          color="#f59e0b"
+                          format={v => `${v.toFixed(1)} °C`}/>
+              </div>
+
+              {/* Stat tiles */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
+                <Tile label="SOC Output"
+                      value={`${(result.soc*100).toFixed(1)}%`}
+                      sub="State of Charge"
+                      color="var(--blue)"/>
+                <Tile label="SOH Output"
+                      value={`${(result.soh*100).toFixed(1)}%`}
+                      sub="State of Health"
+                      color="var(--green)"/>
+                <Tile label="Temperature"
+                      value={`${result.temperature.toFixed(2)}°C`}
+                      sub="Cell temperature"
+                      color="#f59e0b"/>
+              </div>
+
+              {/* Sparkline */}
+              <div className="card" style={{padding:'24px 28px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',
+                             alignItems:'center',marginBottom:'16px'}}>
+                  <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted)',
+                             letterSpacing:'0.06em',textTransform:'uppercase'}}>
+                    Temperature History
+                  </p>
+                  <span className="badge badge-neutral">{history.length} readings</span>
+                </div>
+                <div style={{height:'80px'}}>
+                  <Sparkline data={history} color="var(--blue)"/>
+                </div>
+                {history.length > 0 && (
+                  <div style={{display:'flex',justifyContent:'space-between',
+                               marginTop:'12px',paddingTop:'12px',
+                               borderTop:'1px solid var(--border)'}}>
+                    {['min','avg','max'].map(s => {
+                      const vals = history.map(h=>h.temp);
+                      const v = s==='min'?Math.min(...vals):s==='max'?Math.max(...vals):
+                                vals.reduce((a,b)=>a+b,0)/vals.length;
+                      return (
+                        <div key={s} style={{textAlign:'center'}}>
+                          <p style={{fontFamily:'var(--mono)',fontSize:'10px',
+                                     color:'var(--muted)',marginBottom:'4px'}}>{s}</p>
+                          <p style={{fontFamily:'var(--mono)',fontSize:'13px',
+                                     fontWeight:500,color:'var(--text)'}}>
+                            {v.toFixed(1)}°C
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
         </div>
-    );
-};
+      </div>
+
+      {/* ── FOOTER ── */}
+      <footer style={{marginTop:'48px',paddingTop:'20px',borderTop:'1px solid var(--border)',
+                      display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)'}}>
+          Battery Management System · AI Pipeline v3
+        </span>
+        <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)'}}>
+          Built with FastAPI · PyTorch · React
+        </span>
+      </footer>
+    </div>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>

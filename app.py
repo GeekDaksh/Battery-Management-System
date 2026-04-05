@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 STATIC_FILE = os.path.join(BASE_DIR, "static", "index.html")
 MODEL_PATH  = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
@@ -25,44 +25,33 @@ app.add_middleware(
 _model       = None
 _global_mean = None
 _global_std  = None
-_load_error  = None          # stores the error message if loading fails
+_load_error  = None
 _device      = torch.device("cpu")
 
 
 def _load_model():
-    """Lazy-load the model. Called on first /predict request."""
     global _model, _global_mean, _global_std, _load_error
-
-    if _model is not None:          # already loaded
+    if _model is not None:
         return True
-    if _load_error is not None:     # already failed — don't retry
+    if _load_error is not None:
         return False
-
     try:
-        # Import here so a missing src/ doesn't kill startup
         from src.bms_pipeline import BatteryTransformer
-
         print(f"[BMS] Loading model from {MODEL_PATH} ...")
-
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError(f"Model file missing: {MODEL_PATH}")
         if not os.path.exists(GLOBALS_PATH):
             raise FileNotFoundError(f"Globals file missing: {GLOBALS_PATH}")
-
         m = BatteryTransformer(input_dim=11).to(_device)
         m.load_state_dict(torch.load(MODEL_PATH, map_location=_device))
         m.eval()
-
         with open(GLOBALS_PATH, "rb") as f:
             globs = pickle.load(f)
-
         _model       = m
         _global_mean = globs["global_mean"]
         _global_std  = globs["global_std"]
-
         print("[BMS] ✅ Model loaded successfully.")
         return True
-
     except Exception:
         _load_error = traceback.format_exc()
         print(f"[BMS] ❌ Model load failed:\n{_load_error}", file=sys.stderr)
@@ -84,7 +73,6 @@ async def health():
         "load_error": _load_error,
         "model_path_exists": os.path.exists(MODEL_PATH),
         "globals_path_exists": os.path.exists(GLOBALS_PATH),
-        "cwd": os.getcwd(),
         "files_in_models": os.listdir(os.path.join(BASE_DIR, "models"))
                            if os.path.isdir(os.path.join(BASE_DIR, "models")) else "MISSING",
     }
@@ -92,13 +80,11 @@ async def health():
 
 @app.post("/predict")
 async def predict(data: dict):
-    # Attempt lazy load
     if not _load_model():
         return JSONResponse(
             status_code=503,
             content={"status": "error", "message": f"Model not ready: {_load_error}"}
         )
-
     try:
         from src.bms_pipeline import (
             run_predictor,
@@ -107,7 +93,15 @@ async def predict(data: dict):
             run_kill_agent,
         )
 
-        predictor_output = run_predictor(data, _model, _global_mean, _global_std, _device)
+        # ── KEY FIX: map frontend keys → pipeline expected keys ──
+        pipeline_input = {
+            "soc":       data.get("soc",       data.get("SOC",  0.85)),
+            "soh":       data.get("soh",       data.get("SOH",  0.92)),
+            "temp_C":    data.get("temp_C",    data.get("temp", 28.0)),
+            "current_A": data.get("current_A", data.get("current", 4.5)),
+        }
+
+        predictor_output = run_predictor(pipeline_input, _model, _global_mean, _global_std, _device)
         df, transformer_state = run_simulator_optimiser(predictor_output)
         selected_policy, policies, metrics_df, _ = run_meta_agent(df, transformer_state)
         final_policy, decision = run_kill_agent(
