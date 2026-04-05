@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>BMS · Battery Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
@@ -12,754 +12,209 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 :root {
-  --bg:          #080808;
-  --bg2:         #0c0c0c;
-  --surface:     #111111;
-  --surface2:    #161616;
-  --surface3:    #1c1c1c;
-  --border:      #222222;
-  --border2:     #2e2e2e;
-  --text:        #f0ede8;
-  --text2:       #a09a93;
-  --text3:       #5a554f;
-  --accent:      #e8e0d4;
-  --lime:        #c8f06e;
-  --lime-dim:    rgba(200,240,110,0.08);
-  --lime-glow:   rgba(200,240,110,0.18);
-  --red:         #ff5a5a;
-  --red-dim:     rgba(255,90,90,0.08);
-  --red-glow:    rgba(255,90,90,0.18);
-  --amber:       #f0b464;
-  --blue:        #7eb8f5;
-  --mono:        'DM Mono', monospace;
-  --serif:       'Fraunces', serif;
-  --sans:        'Syne', sans-serif;
+  --bg:       #080808;
+  --surface:  #111111;
+  --surface2: #161616;
+  --surface3: #1c1c1c;
+  --border:   #222222;
+  --border2:  #2e2e2e;
+  --text:     #f0ede8;
+  --text2:    #a09a93;
+  --text3:    #5a554f;
+  --lime:     #c8f06e;
+  --lime-dim: rgba(200,240,110,0.08);
+  --red:      #ff5a5a;
+  --red-dim:  rgba(255,90,90,0.08);
+  --amber:    #f0b464;
+  --blue:     #7eb8f5;
+  --mono:     'DM Mono', monospace;
+  --serif:    'Fraunces', serif;
+  --sans:     'Syne', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;}
+body{
+  font-family:var(--sans);background:var(--bg);color:var(--text);
+  min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:64px 64px;opacity:0.18;pointer-events:none;
+}
+#root{position:relative;z-index:1;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.wrapper{max-width:1400px;margin:0 auto;padding:0 20px 60px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.logo-mark{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:38px;height:38px;border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);flex-shrink:0;}
+.logo-title{font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+.logo-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.status-pill{display:flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid var(--border2);border-radius:100px;background:var(--surface);font-family:var(--mono);font-size:11px;color:var(--text2);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);flex-shrink:0;}
+.clock-text{font-family:var(--mono);font-size:11px;color:var(--text3);}
+
+/* HERO */
+.hero{padding:32px 0 28px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.eyebrow-line{width:22px;height:1px;background:var(--lime);opacity:0.6;}
+.eyebrow-text{font-family:var(--mono);font-size:10px;color:var(--lime);letter-spacing:0.14em;text-transform:uppercase;opacity:0.8;}
+.hero-h1{font-family:var(--serif);font-size:clamp(34px,5.5vw,70px);font-weight:300;letter-spacing:-0.03em;line-height:0.95;color:var(--text);}
+.hero-h1 em{font-style:italic;color:var(--text2);font-weight:300;}
+.hero-desc{font-family:var(--sans);font-size:12px;color:var(--text2);line-height:1.75;max-width:400px;margin-top:14px;font-weight:400;}
+.hero-version{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:320px 1fr;gap:1px;border:1px solid var(--border);border-top:none;}
+.panel{background:var(--surface);padding:28px 24px;}
+.panel-left{border-right:1px solid var(--border);}
+.panel-right{background:var(--bg);padding:28px;}
+.panel-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+
+/* MOBILE */
+@media(max-width:760px){
+  .main-grid{grid-template-columns:1fr;}
+  .panel-left{border-right:none;border-bottom:1px solid var(--border);}
+  .panel-right{padding:24px 20px;}
+  .wrapper{padding:0 14px 60px;}
+  .hero{padding:22px 0;}
+  .hero-version,.clock-text{display:none;}
+  .confidence-num{font-size:40px!important;}
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; scroll-behavior: smooth; }
+/* SLIDER */
+.slider-wrap{margin-bottom:22px;}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.slider-label{font-size:12px;font-weight:500;color:var(--text2);}
+.slider-val{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--surface3);border:1px solid var(--border2);padding:2px 9px;border-radius:5px;}
+input[type=range]{-webkit-appearance:none;width:100%;height:1px;background:var(--border2);border-radius:1px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--text);border:3px solid var(--bg);box-shadow:0 0 0 1px var(--border2);cursor:pointer;transition:box-shadow 0.15s;}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 5px rgba(200,240,110,0.18);}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:3px solid var(--bg);border-radius:50%;background:var(--text);cursor:pointer;}
 
-body {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
+/* BUTTON */
+.run-btn{width:100%;padding:14px 20px;background:var(--lime);color:#0a0f02;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity 0.15s,transform 0.12s,box-shadow 0.2s;margin-top:8px;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;}
+.run-btn:hover:not(:disabled){opacity:0.9;box-shadow:0 8px 32px rgba(200,240,110,0.2);}
+.run-btn:active:not(:disabled){transform:scale(0.98);}
+.run-btn:disabled{opacity:0.35;cursor:not-allowed;background:var(--surface3);color:var(--text3);}
 
-/* Grid texture background */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 0;
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 64px 64px;
-  opacity: 0.25;
-  pointer-events: none;
-}
+/* LOADING */
+.loading-bar-track{width:100%;height:2px;background:var(--border2);border-radius:1px;margin-top:14px;overflow:hidden;}
+@keyframes indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+.loading-bar-fill{height:100%;width:25%;background:var(--lime);border-radius:1px;animation:indeterminate 1.6s ease-in-out infinite;}
+.loading-status{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.loading-text{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;}
+.loading-timer{font-family:var(--mono);font-size:10px;color:var(--lime);}
 
-/* Radial glow top-center */
-body::after {
-  content: '';
-  position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-  width: 900px; height: 600px; z-index: 0;
-  background: radial-gradient(ellipse at center, rgba(200,240,110,0.04) 0%, transparent 70%);
-  pointer-events: none;
-}
+/* INPUT SUMMARY */
+.input-summary{margin-top:22px;padding-top:22px;border-top:1px solid var(--border);}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.summary-row:last-child{border-bottom:none;}
+.summary-key{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;}
+.summary-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);}
 
-#root { position: relative; z-index: 1; }
+/* EMPTY */
+.empty-state{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
+.empty-icon{width:52px;height:52px;border:1px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--surface);}
+.empty-text{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.06em;}
+.empty-hint{font-family:var(--sans);font-size:12px;color:var(--text3);max-width:260px;line-height:1.7;}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* DECISION */
+.decision-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden;}
+.decision-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
+.decision-card.safe::before{background:linear-gradient(90deg,transparent,var(--lime),transparent);}
+.decision-card.danger::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.decision-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.decision-badges{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:100px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;border:1px solid;}
+.chip-safe{background:var(--lime-dim);color:var(--lime);border-color:rgba(200,240,110,0.3);}
+.chip-danger{background:var(--red-dim);color:var(--red);border-color:rgba(255,90,90,0.3);}
+.chip-neutral{background:var(--surface3);color:var(--text3);border-color:var(--border2);}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.decision-reason{font-family:var(--serif);font-size:clamp(18px,3vw,28px);font-weight:300;letter-spacing:-0.02em;line-height:1.2;margin-bottom:10px;}
+.decision-ts{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.confidence-block{text-align:right;flex-shrink:0;}
+.confidence-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+.confidence-num{font-family:var(--sans);font-size:52px;font-weight:800;line-height:1;letter-spacing:-0.04em;}
+.confidence-unit{font-size:20px;font-weight:500;}
 
-/* ── LAYOUT WRAPPERS ── */
-.wrapper {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 32px 80px;
-}
+/* NUMBERS */
+.number-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.number-cell{background:var(--surface);padding:16px 14px;text-align:center;}
+.number-cell-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+.number-cell-val{font-family:var(--sans);font-size:clamp(16px,2.5vw,24px);font-weight:700;letter-spacing:-0.03em;line-height:1;}
 
-/* ── HEADER ── */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0;
-}
+/* BARS */
+.bars-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:14px;}
+.bar-row{margin-bottom:18px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.bar-label{font-size:12px;font-weight:500;color:var(--text2);}
+.bar-val{font-family:var(--mono);font-size:12px;color:var(--text);}
+.bar-track{height:2px;background:var(--border2);border-radius:1px;position:relative;}
+.bar-fill{height:100%;border-radius:1px;position:relative;transition:width 0.8s cubic-bezier(.4,0,.2,1);}
+.bar-fill::after{content:'';position:absolute;right:-1px;top:-3px;width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;}
 
-.logo-mark {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+/* SPARK */
+.spark-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;}
+.spark-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.spark-title{font-size:12px;font-weight:600;color:var(--text2);}
+.spark-stats{display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.spark-stat{text-align:center;}
+.spark-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+.spark-stat-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
 
-.logo-icon {
-  width: 40px; height: 40px;
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--surface2);
-  position: relative;
-  overflow: hidden;
-}
-.logo-icon::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(200,240,110,0.06), transparent);
-}
+/* ERROR */
+.error-box{margin-top:14px;padding:12px 14px;border-radius:8px;background:var(--red-dim);border:1px solid rgba(255,90,90,0.25);font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.7;word-break:break-word;}
 
-.logo-text { line-height: 1; }
-.logo-title {
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text);
-}
-.logo-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  margin-top: 3px;
-  letter-spacing: 0.06em;
-}
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:20px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.footer-text{font-family:var(--mono);font-size:10px;color:var(--text3);}
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
+.reset-btn{background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;-webkit-tap-highlight-color:transparent;}
+.reset-btn:hover{color:var(--text2);}
 
-.status-pill {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 14px;
-  border: 1px solid var(--border2);
-  border-radius: 100px;
-  background: var(--surface);
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text2);
-}
-
-.status-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--lime);
-  flex-shrink: 0;
-}
-
-.clock-text {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text3);
-  letter-spacing: 0.04em;
-}
-
-/* ── HERO SECTION ── */
-.hero {
-  padding: 72px 0 56px;
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: 40px;
-}
-
-.hero-eyebrow {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 20px;
-}
-.eyebrow-line {
-  width: 24px; height: 1px;
-  background: var(--lime);
-  opacity: 0.6;
-}
-.eyebrow-text {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--lime);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-.hero-h1 {
-  font-family: var(--serif);
-  font-size: clamp(52px, 6vw, 88px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
-  color: var(--text);
-}
-.hero-h1 em {
-  font-style: italic;
-  color: var(--text2);
-  font-weight: 300;
-}
-
-.hero-desc {
-  font-family: var(--sans);
-  font-size: 13px;
-  color: var(--text2);
-  line-height: 1.75;
-  max-width: 440px;
-  margin-top: 20px;
-  font-weight: 400;
-}
-
-.hero-badge {
-  text-align: right;
-}
-.hero-version {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  letter-spacing: 0.06em;
-}
-
-/* ── MAIN GRID ── */
-.main-grid {
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 1px;
-  margin-top: 0;
-  border: 1px solid var(--border);
-  border-top: none;
-}
-
-/* ── PANEL ── */
-.panel {
-  background: var(--surface);
-  padding: 32px;
-}
-.panel-left {
-  border-right: 1px solid var(--border);
-}
-.panel-right {
-  background: var(--bg);
-  padding: 32px 40px;
-}
-
-.panel-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* ── SLIDER ── */
-.slider-wrap { margin-bottom: 26px; }
-.slider-header {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 12px;
-}
-.slider-label {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
-  letter-spacing: 0.01em;
-}
-.slider-val {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text);
-  background: var(--surface3);
-  border: 1px solid var(--border2);
-  padding: 3px 10px;
-  border-radius: 5px;
-  letter-spacing: 0.03em;
-}
-
-input[type=range] {
-  -webkit-appearance: none;
-  width: 100%; height: 1px;
-  background: var(--border2);
-  border-radius: 1px;
-  outline: none;
-  cursor: pointer;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--text);
-  border: 3px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--border2);
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.12s;
-}
-input[type=range]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 0 4px rgba(200,240,110,0.2);
-  transform: scale(1.1);
-}
-input[type=range]::-moz-range-thumb {
-  width: 16px; height: 16px;
-  border: 3px solid var(--bg);
-  border-radius: 50%;
-  background: var(--text);
-  cursor: pointer;
-}
-
-/* ── BUTTON ── */
-.run-btn {
-  width: 100%;
-  padding: 14px 20px;
-  background: var(--lime);
-  color: #0a0f02;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: opacity 0.15s, transform 0.12s, box-shadow 0.2s;
-  margin-top: 8px;
-  position: relative;
-  overflow: hidden;
-}
-.run-btn::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
-}
-.run-btn:hover:not(:disabled) {
-  opacity: 0.92;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(200,240,110,0.22);
-}
-.run-btn:active:not(:disabled) { transform: translateY(0); }
-.run-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  background: var(--surface3);
-  color: var(--text3);
-}
-
-/* ── INPUT SUMMARY ── */
-.input-summary {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
-}
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-}
-.summary-row:last-child { border-bottom: none; }
-.summary-key {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.summary-val {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
-}
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  min-height: 560px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  text-align: center;
-}
-.empty-icon {
-  width: 56px; height: 56px;
-  border: 1px solid var(--border2);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--surface);
-  margin-bottom: 4px;
-}
-.empty-text {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text3);
-  letter-spacing: 0.06em;
-}
-.empty-hint {
-  font-family: var(--sans);
-  font-size: 12px;
-  color: var(--text3);
-  max-width: 260px;
-  line-height: 1.7;
-}
-
-/* ── DECISION CARD ── */
-.decision-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 32px 36px;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-}
-.decision-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-}
-.decision-card.safe::before { background: linear-gradient(90deg, transparent, var(--lime), transparent); }
-.decision-card.danger::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
-
-.decision-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-}
-
-.decision-left { flex: 1; }
-
-.decision-badges {
-  display: flex; gap: 8px; align-items: center;
-  margin-bottom: 18px;
-}
-
-.chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px;
-  border-radius: 100px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 1px solid;
-}
-.chip-safe   { background: var(--lime-dim); color: var(--lime); border-color: rgba(200,240,110,0.3); }
-.chip-danger { background: var(--red-dim);  color: var(--red);  border-color: rgba(255,90,90,0.3); }
-.chip-neutral { background: var(--surface3); color: var(--text3); border-color: var(--border2); }
-.chip-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-
-.decision-reason {
-  font-family: var(--serif);
-  font-size: clamp(22px, 2.5vw, 34px);
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin-bottom: 12px;
-}
-.decision-ts {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  letter-spacing: 0.05em;
-}
-
-.confidence-block {
-  text-align: right;
-  flex-shrink: 0;
-}
-.confidence-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.confidence-num {
-  font-family: var(--sans);
-  font-size: 56px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-.confidence-unit {
-  font-size: 24px;
-  font-weight: 500;
-}
-
-/* ── METRICS ── */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.metric-tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 22px 24px;
-  position: relative;
-  overflow: hidden;
-}
-.metric-tile::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-  border-radius: 0 0 12px 12px;
-}
-.metric-tag {
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--text3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-.metric-val {
-  font-family: var(--sans);
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.metric-sub {
-  font-family: var(--sans);
-  font-size: 11px;
-  color: var(--text3);
-  font-weight: 400;
-}
-
-/* ── PROGRESS BARS ── */
-.bars-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px 28px;
-  margin-bottom: 20px;
-}
-.bar-row { margin-bottom: 20px; }
-.bar-row:last-child { margin-bottom: 0; }
-.bar-header {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 8px;
-}
-.bar-label {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text2);
-}
-.bar-val {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text);
-  font-weight: 400;
-}
-.bar-track {
-  height: 2px;
-  background: var(--border2);
-  border-radius: 1px;
-  overflow: visible;
-  position: relative;
-}
-.bar-fill {
-  height: 100%;
-  border-radius: 1px;
-  position: relative;
-  transition: width 0.8s cubic-bezier(.4,0,.2,1);
-}
-.bar-fill::after {
-  content: '';
-  position: absolute; right: -1px; top: -3px;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 8px currentColor;
-}
-
-/* ── SPARKLINE ── */
-.spark-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px 28px;
-}
-.spark-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px;
-}
-.spark-title {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--text2);
-}
-.spark-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-.spark-stat { text-align: center; }
-.spark-stat-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--text3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-}
-.spark-stat-val {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-}
-
-/* ── ERROR ── */
-.error-box {
-  margin-top: 14px;
-  padding: 14px 16px;
-  border-radius: 8px;
-  background: var(--red-dim);
-  border: 1px solid rgba(255,90,90,0.25);
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--red);
-  line-height: 1.7;
-  word-break: break-word;
-}
-
-/* ── FOOTER ── */
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 24px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.footer-text {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  letter-spacing: 0.06em;
-}
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-up { animation: fadeUp 0.5s cubic-bezier(.4,0,.2,1) both; }
-.fade-up-1 { animation-delay: 0.05s; }
-.fade-up-2 { animation-delay: 0.1s; }
-.fade-up-3 { animation-delay: 0.15s; }
-.fade-up-4 { animation-delay: 0.2s; }
-
-@keyframes pulseLime { 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(200,240,110,0.4)} 50%{opacity:0.6; box-shadow:0 0 0 4px rgba(200,240,110,0)} }
-.pulse-live { animation: pulseLime 2.8s ease infinite; }
-
-/* ── DOTS LOADER ── */
-@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
-.dot-loader { display:flex; gap:5px; align-items:center; }
-.dot-loader span {
-  display:inline-block; width:5px; height:5px;
-  border-radius:50%; background:#0a0f02;
-}
-.dot-loader span:nth-child(1){animation:bounce 1.2s ease infinite 0s}
-.dot-loader span:nth-child(2){animation:bounce 1.2s ease infinite 0.15s}
-.dot-loader span:nth-child(3){animation:bounce 1.2s ease infinite 0.3s}
-
-/* ── RESET BUTTON ── */
-.reset-btn {
-  background: none; border: none; cursor: pointer;
-  font-family: var(--mono); font-size: 10px;
-  color: var(--text3); letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 4px 2px;
-  transition: color 0.15s;
-}
-.reset-btn:hover { color: var(--text2); }
-
-/* ── HORIZONTAL RULE ── */
-.hr { border: none; border-top: 1px solid var(--border); }
-
-/* ── NUMBER ROW ── */
-.number-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--border);
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.number-cell {
-  background: var(--surface);
-  padding: 20px 22px;
-  text-align: center;
-}
-.number-cell-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--text3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.number-cell-val {
-  font-family: var(--sans);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp 0.45s cubic-bezier(.4,0,.2,1) both;}
+.fade-up-1{animation-delay:0.05s;}
+.fade-up-2{animation-delay:0.1s;}
+.fade-up-3{animation-delay:0.15s;}
+@keyframes pulseLime{0%,100%{opacity:1}50%{opacity:0.5}}
+.pulse-live{animation:pulseLime 2.8s ease infinite;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+.dot-loader{display:flex;gap:4px;align-items:center;}
+.dot-loader span{display:inline-block;width:4px;height:4px;border-radius:50%;background:#0a0f02;}
+.dot-loader span:nth-child(1){animation:bounce 1.1s ease infinite 0s}
+.dot-loader span:nth-child(2){animation:bounce 1.1s ease infinite 0.15s}
+.dot-loader span:nth-child(3){animation:bounce 1.1s ease infinite 0.3s}
+@keyframes indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
 </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef } = React;
 
-/* ─── SPARKLINE ─── */
 const Sparkline = ({ data }) => {
   if (!data || data.length < 2) return (
-    <div style={{height:'100%',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--text3)'}}>
-        — no data yet —
-      </span>
+    <div style={{height:'72px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--text3)'}}>— no data —</span>
     </div>
   );
-  const W = 600, H = 72, P = 6;
-  const vals = data.map(d => d.temp);
-  const mn = Math.min(...vals) - 0.5, mx = Math.max(...vals) + 0.5;
-  const rng = mx - mn || 1;
-  const px = i => P + (i / (data.length - 1)) * (W - P * 2);
-  const py = v => H - P - ((v - mn) / rng) * (H - P * 2);
-  const pts = data.map((d,i) => `${px(i).toFixed(1)},${py(d.temp).toFixed(1)}`).join(' ');
-  const area = `${P},${H-P} ${pts} ${px(data.length-1).toFixed(1)},${H-P}`;
-  const color = 'var(--lime)';
+  const W=600,H=72,P=6;
+  const vals=data.map(d=>d.temp);
+  const mn=Math.min(...vals)-0.5,mx=Math.max(...vals)+0.5,rng=mx-mn||1;
+  const px=i=>P+(i/(data.length-1))*(W-P*2);
+  const py=v=>H-P-((v-mn)/rng)*(H-P*2);
+  const pts=data.map((d,i)=>`${px(i).toFixed(1)},${py(d.temp).toFixed(1)}`).join(' ');
+  const area=`${P},${H-P} ${pts} ${px(data.length-1).toFixed(1)},${H-P}`;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="72" preserveAspectRatio="none" style={{display:'block'}}>
       <defs>
@@ -769,9 +224,8 @@ const Sparkline = ({ data }) => {
         </linearGradient>
       </defs>
       <polygon points={area} fill="url(#spg)"/>
-      <polyline points={pts} fill="none" stroke="#c8f06e" strokeWidth="1.5"
-                strokeLinejoin="round" strokeLinecap="round"/>
-      {data.map((d,i) => (
+      <polyline points={pts} fill="none" stroke="#c8f06e" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+      {data.map((d,i)=>(
         <circle key={i} cx={px(i)} cy={py(d.temp)} r={i===data.length-1?3:2}
                 fill="#c8f06e" opacity={i===data.length-1?1:0.5}/>
       ))}
@@ -779,10 +233,9 @@ const Sparkline = ({ data }) => {
   );
 };
 
-/* ─── GAUGE BAR ─── */
-const GaugeBar = ({ label, value, max = 1, color, format }) => {
-  const pct = Math.min(Math.max(value / max, 0), 1) * 100;
-  const display = format ? format(value) : `${(value*100).toFixed(1)}%`;
+const GaugeBar = ({ label, value, max=1, color, format }) => {
+  const pct=Math.min(Math.max(value/max,0),1)*100;
+  const display=format?format(value):`${(value*100).toFixed(1)}%`;
   return (
     <div className="bar-row">
       <div className="bar-header">
@@ -790,13 +243,12 @@ const GaugeBar = ({ label, value, max = 1, color, format }) => {
         <span className="bar-val" style={{color}}>{display}</span>
       </div>
       <div className="bar-track">
-        <div className="bar-fill" style={{width:`${pct}%`, background:color, color}}/>
+        <div className="bar-fill" style={{width:`${pct}%`,background:color,color}}/>
       </div>
     </div>
   );
 };
 
-/* ─── SLIDER ─── */
 const Slider = ({ label, value, min, max, step, unit, onChange }) => (
   <div className="slider-wrap">
     <div className="slider-header">
@@ -804,155 +256,134 @@ const Slider = ({ label, value, min, max, step, unit, onChange }) => (
       <span className="slider-val">{value}{unit}</span>
     </div>
     <input type="range" min={min} max={max} step={step} value={value}
-           onChange={e => onChange(parseFloat(e.target.value))}/>
+           onChange={e=>onChange(parseFloat(e.target.value))}/>
   </div>
 );
 
-/* ─── FIELDS ─── */
-const FIELDS = [
-  {key:'soc',       label:'State of Charge',  min:0,   max:1,  step:0.01, unit:'',   init:0.85},
-  {key:'soh',       label:'State of Health',  min:0,   max:1,  step:0.01, unit:'',   init:0.92},
-  {key:'temp_C',    label:'Temperature',      min:-20, max:80, step:0.5,  unit:'°C', init:28  },
-  {key:'current_A', label:'Current',          min:0,   max:20, step:0.1,  unit:' A', init:4.5 },
+const FIELDS=[
+  {key:'soc',       label:'State of Charge',min:0,  max:1, step:0.01,unit:'',  init:0.85},
+  {key:'soh',       label:'State of Health', min:0,  max:1, step:0.01,unit:'',  init:0.92},
+  {key:'temp_C',    label:'Temperature',     min:-20,max:80,step:0.5, unit:'°C',init:28  },
+  {key:'current_A', label:'Current',         min:0,  max:20,step:0.1, unit:' A',init:4.5 },
 ];
-const initInputs = Object.fromEntries(FIELDS.map(f => [f.key, f.init]));
+const initInputs=Object.fromEntries(FIELDS.map(f=>[f.key,f.init]));
 
-/* ─── APP ─── */
-function App() {
-  const [inputs,  setInputs]  = useState(initInputs);
-  const [loading, setLoading] = useState(false);
-  const [result,  setResult]  = useState(null);
-  const [history, setHistory] = useState([]);
-  const [error,   setError]   = useState(null);
-  const [rKey,    setRKey]    = useState(0);
-  const [clock,   setClock]   = useState('');
+function App(){
+  const [inputs, setInputs] =useState(initInputs);
+  const [loading,setLoading]=useState(false);
+  const [elapsed,setElapsed]=useState(0);
+  const [result, setResult] =useState(null);
+  const [history,setHistory]=useState([]);
+  const [error,  setError]  =useState(null);
+  const [rKey,   setRKey]   =useState(0);
+  const [clock,  setClock]  =useState('');
+  const timerRef=useRef(null);
 
-  useEffect(() => {
-    const tick = () => setClock(new Date().toLocaleTimeString('en-GB', {hour12:false}));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
+  useEffect(()=>{
+    const tick=()=>setClock(new Date().toLocaleTimeString('en-GB',{hour12:false}));
+    tick();const id=setInterval(tick,1000);return()=>clearInterval(id);
+  },[]);
 
-  const set = (k, v) => setInputs(p => ({...p, [k]: v}));
+  const set=(k,v)=>setInputs(p=>({...p,[k]:v}));
 
-  const run = async () => {
-    setLoading(true); setError(null);
-    try {
-      const res  = await fetch('/predict', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(inputs),
+  const run=async()=>{
+    setLoading(true);setError(null);setElapsed(0);
+    timerRef.current=setInterval(()=>setElapsed(e=>e+1),1000);
+    try{
+      const res=await fetch('/predict',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(inputs),
       });
-      const data = await res.json();
-      if (data.status === 'success') {
-        setResult(data); setRKey(k => k+1);
-        setHistory(h => [...h, {
-          time: new Date().toLocaleTimeString('en-GB',{hour12:false}).slice(0,5),
-          temp: data.temperature,
+      const data=await res.json();
+      if(data.status==='success'){
+        setResult(data);setRKey(k=>k+1);
+        setHistory(h=>[...h,{
+          time:new Date().toLocaleTimeString('en-GB',{hour12:false}).slice(0,5),
+          temp:data.temperature,
         }].slice(-16));
-      } else {
-        setError(data.message || 'Pipeline error');
-      }
-    } catch(e) { setError('Network: ' + e.message); }
-    finally { setLoading(false); }
+      }else{setError(data.message||'Pipeline error');}
+    }catch(e){setError('Network: '+e.message);}
+    finally{clearInterval(timerRef.current);setLoading(false);}
   };
 
-  const safe = result?.decision === 'SAFE';
+  const safe=result?.decision==='SAFE';
 
-  return (
+  return(
     <div className="wrapper">
-
-      {/* ── TOPBAR ── */}
       <header className="topbar">
         <div className="logo-mark">
           <div className="logo-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                  stroke="#c8f06e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="7" width="18" height="11" rx="2"/>
-              <path d="M22 11v3"/>
-              <path d="M6 11h4m0 0v-2m0 2v2"/>
+              <path d="M22 11v3"/><path d="M6 11h4m0 0v-2m0 2v2"/>
             </svg>
           </div>
-          <div className="logo-text">
-            <div className="logo-title">BMS</div>
-            <div className="logo-sub">Battery Intelligence</div>
+          <div>
+            <div className="logo-title">Battery Management System</div>
+            <div className="logo-sub">AI Intelligence · Pipeline v3</div>
           </div>
         </div>
         <div className="topbar-right">
           <span className="clock-text">{clock}</span>
           <div className="status-pill">
             <span className="status-dot pulse-live"/>
-            <span>System Online</span>
+            <span>Online</span>
           </div>
         </div>
       </header>
 
-      {/* ── HERO ── */}
       <div className="hero">
         <div>
           <div className="hero-eyebrow">
             <div className="eyebrow-line"/>
             <span className="eyebrow-text">Neural Pipeline v3</span>
           </div>
-          <h1 className="hero-h1">
-            Cell Analytics<br/>
-            <em>Dashboard</em>
-          </h1>
+          <h1 className="hero-h1">Cell Analytics<br/><em>Dashboard</em></h1>
           <p className="hero-desc">
-            Configure battery telemetry parameters and run the multi-agent
-            neural pipeline to receive real-time health predictions and
-            policy recommendations.
+            Configure battery telemetry and run the multi-agent neural pipeline
+            to receive real-time health predictions and policy recommendations.
           </p>
         </div>
-        <div className="hero-badge">
-          <div className="hero-version">PyTorch · FastAPI · React</div>
-        </div>
+        <div className="hero-version">PyTorch · FastAPI · React</div>
       </div>
 
-      {/* ── MAIN GRID ── */}
       <div className="main-grid">
-
-        {/* ── LEFT PANEL ── */}
+        {/* LEFT */}
         <div className="panel panel-left">
           <div className="panel-label">
             <span>Parameters</span>
-            <button className="reset-btn" onClick={() => setInputs(initInputs)}>
-              Reset
-            </button>
+            <button className="reset-btn" onClick={()=>setInputs(initInputs)}>Reset</button>
           </div>
-
-          {FIELDS.map(f => (
+          {FIELDS.map(f=>(
             <Slider key={f.key} label={f.label} value={inputs[f.key]}
               min={f.min} max={f.max} step={f.step} unit={f.unit}
-              onChange={v => set(f.key, v)}/>
+              onChange={v=>set(f.key,v)}/>
           ))}
-
           <button className="run-btn" onClick={run} disabled={loading}>
-            {loading ? (
-              <>
-                <div className="dot-loader">
-                  <span/><span/><span/>
-                </div>
-                <span>Analyzing</span>
-              </>
-            ) : (
-              <>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-                Run Pipeline
-              </>
+            {loading?(
+              <><div className="dot-loader"><span/><span/><span/></div><span>Analyzing</span></>
+            ):(
+              <><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run Pipeline</>
             )}
           </button>
-
-          {error && <div className="error-box">{error}</div>}
-
-          {/* Input summary */}
+          {loading&&(
+            <div>
+              <div className="loading-bar-track">
+                <div className="loading-bar-fill"/>
+              </div>
+              <div className="loading-status">
+                <span className="loading-text">Running neural pipeline…</span>
+                <span className="loading-timer">{elapsed}s elapsed</span>
+              </div>
+            </div>
+          )}
+          {error&&<div className="error-box">{error}</div>}
           <div className="input-summary">
-            <div className="panel-label" style={{marginBottom:'16px',paddingBottom:'12px'}}>
+            <div className="panel-label" style={{marginBottom:'14px',paddingBottom:'12px'}}>
               <span>Current Inputs</span>
             </div>
-            {FIELDS.map(f => (
+            {FIELDS.map(f=>(
               <div key={f.key} className="summary-row">
                 <span className="summary-key">{f.label}</span>
                 <span className="summary-val">{inputs[f.key]}{f.unit}</span>
@@ -961,102 +392,83 @@ function App() {
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
+        {/* RIGHT */}
         <div className="panel panel-right">
-          {!result ? (
+          {!result?(
             <div className="empty-state">
               <div className="empty-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
                      stroke="var(--border2)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="7" width="18" height="11" rx="2"/>
                   <path d="M22 11v3"/>
                 </svg>
               </div>
-              <p className="empty-text">
-                {loading ? 'running neural pipeline…' : 'awaiting analysis'}
-              </p>
-              <p className="empty-hint">
-                Set battery parameters on the left and run the pipeline to see health predictions.
-              </p>
+              <p className="empty-text">{loading?`running… (${elapsed}s)`:'awaiting analysis'}</p>
+              <p className="empty-hint">Set battery parameters and run the pipeline to see health predictions.</p>
             </div>
-          ) : (
+          ):(
             <div key={rKey}>
-              {/* Decision Card */}
               <div className={`decision-card fade-up ${safe?'safe':'danger'}`}>
                 <div className="decision-header">
-                  <div className="decision-left">
+                  <div style={{flex:1}}>
                     <div className="decision-badges">
                       <span className={`chip ${safe?'chip-safe':'chip-danger'}`}>
-                        <span className="chip-dot"/>
-                        {result.decision}
+                        <span className="chip-dot"/>{result.decision}
                       </span>
                       <span className="chip chip-neutral">Policy {result.policy_id}</span>
                     </div>
-                    <div className="decision-reason" style={{color: safe ? 'var(--lime)' : 'var(--red)'}}>
+                    <div className="decision-reason" style={{color:safe?'var(--lime)':'var(--red)'}}>
                       {result.reason}
                     </div>
                     <div className="decision-ts">{new Date().toLocaleString()}</div>
                   </div>
                   <div className="confidence-block">
                     <div className="confidence-label">Confidence</div>
-                    <div className="confidence-num" style={{color: safe ? 'var(--lime)' : 'var(--red)'}}>
-                      {(result.confidence * 100).toFixed(0)}
-                      <span className="confidence-unit">%</span>
+                    <div className="confidence-num" style={{color:safe?'var(--lime)':'var(--red)'}}>
+                      {(result.confidence*100).toFixed(0)}<span className="confidence-unit">%</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Metric Tiles */}
               <div className="number-row fade-up fade-up-1">
-                <div className="number-cell">
-                  <div className="number-cell-label">SOC Output</div>
-                  <div className="number-cell-val" style={{color:'var(--blue)'}}>
-                    {(result.soc*100).toFixed(1)}%
+                {[
+                  {label:'SOC Output', val:`${(result.soc*100).toFixed(1)}%`,  color:'var(--blue)'},
+                  {label:'SOH Output', val:`${(result.soh*100).toFixed(1)}%`,  color:'var(--lime)'},
+                  {label:'Temperature',val:`${result.temperature.toFixed(1)}°C`,color:'var(--amber)'},
+                ].map(c=>(
+                  <div key={c.label} className="number-cell">
+                    <div className="number-cell-label">{c.label}</div>
+                    <div className="number-cell-val" style={{color:c.color}}>{c.val}</div>
                   </div>
-                </div>
-                <div className="number-cell">
-                  <div className="number-cell-label">SOH Output</div>
-                  <div className="number-cell-val" style={{color:'var(--lime)'}}>
-                    {(result.soh*100).toFixed(1)}%
-                  </div>
-                </div>
-                <div className="number-cell">
-                  <div className="number-cell-label">Temperature</div>
-                  <div className="number-cell-val" style={{color:'var(--amber)'}}>
-                    {result.temperature.toFixed(1)}°C
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Gauge Bars */}
               <div className="bars-panel fade-up fade-up-2">
-                <div className="panel-label" style={{marginBottom:'20px',paddingBottom:'14px'}}>
+                <div className="panel-label" style={{marginBottom:'16px',paddingBottom:'12px'}}>
                   <span>Output Metrics</span>
                 </div>
                 <GaugeBar label="State of Charge (SOC)" value={result.soc} max={1} color="var(--blue)"/>
                 <GaugeBar label="State of Health (SOH)" value={result.soh} max={1} color="var(--lime)"/>
                 <GaugeBar label="Temperature" value={result.temperature} max={80}
-                          color="var(--amber)" format={v => `${v.toFixed(1)} °C`}/>
+                          color="var(--amber)" format={v=>`${v.toFixed(1)} °C`}/>
               </div>
 
-              {/* Sparkline */}
               <div className="spark-panel fade-up fade-up-3">
                 <div className="spark-header">
                   <span className="spark-title">Temperature History</span>
                   <span className="chip chip-neutral">{history.length} readings</span>
                 </div>
                 <Sparkline data={history}/>
-                {history.length > 1 && (() => {
-                  const vals = history.map(h=>h.temp);
-                  const min = Math.min(...vals), max = Math.max(...vals);
-                  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-                  return (
+                {history.length>1&&(()=>{
+                  const v=history.map(h=>h.temp);
+                  const mn=Math.min(...v),mx=Math.max(...v),avg=v.reduce((a,b)=>a+b,0)/v.length;
+                  return(
                     <div className="spark-stats">
-                      {[['Min',min],['Avg',avg],['Max',max]].map(([l,v]) => (
+                      {[['Min',mn],['Avg',avg],['Max',mx]].map(([l,val])=>(
                         <div key={l} className="spark-stat">
                           <div className="spark-stat-label">{l}</div>
-                          <div className="spark-stat-val">{v.toFixed(1)}°C</div>
+                          <div className="spark-stat-val">{val.toFixed(1)}°C</div>
                         </div>
                       ))}
                     </div>
@@ -1068,10 +480,9 @@ function App() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
       <footer className="footer">
         <span className="footer-text">Battery Management System · AI Pipeline v3</span>
-        <span className="footer-text">Built with FastAPI · PyTorch · React</span>
+        <span className="footer-text">FastAPI · PyTorch · React</span>
       </footer>
     </div>
   );

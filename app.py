@@ -15,11 +15,13 @@ STATIC_FILE  = os.path.join(BASE_DIR, "static", "index.html")
 MODEL_PATH   = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
 
-# ── Your Render URL — update this to your actual URL ──────────────────────
+# ── Create required directories on startup so the pipeline never OSErrors ──
+for _dir in ["dataset", "models", "static"]:
+    os.makedirs(os.path.join(BASE_DIR, _dir), exist_ok=True)
+
 RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL", "http://localhost:10000")
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -64,9 +66,8 @@ def _load_model():
         return False
 
 
-# ── Keep-alive: pings /health every 30s so Render never idles ─────────────
+# ── Keep-alive ping every 30s ──────────────────────────────────────────────
 def _keep_alive():
-    # Wait for server to fully start before pinging
     time.sleep(15)
     while True:
         try:
@@ -78,9 +79,7 @@ def _keep_alive():
             print(f"[BMS] Keep-alive ping failed: {e}", flush=True)
         time.sleep(30)
 
-# Start keep-alive thread (daemon=True so it dies with the process)
-_ka_thread = threading.Thread(target=_keep_alive, daemon=True)
-_ka_thread.start()
+threading.Thread(target=_keep_alive, daemon=True).start()
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────
@@ -98,6 +97,7 @@ async def health():
         "load_error": _load_error,
         "model_path_exists": os.path.exists(MODEL_PATH),
         "globals_path_exists": os.path.exists(GLOBALS_PATH),
+        "dataset_dir_exists": os.path.exists(os.path.join(BASE_DIR, "dataset")),
         "files_in_models": os.listdir(os.path.join(BASE_DIR, "models"))
                            if os.path.isdir(os.path.join(BASE_DIR, "models")) else "MISSING",
     }
