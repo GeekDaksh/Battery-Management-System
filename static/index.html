@@ -6,7 +6,6 @@
 <title>BMS · Battery Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -19,240 +18,261 @@
   --border:   #222222;
   --border2:  #2e2e2e;
   --text:     #f0ede8;
-  --text2:    #a09a93;
-  --text3:    #5a554f;
-  --lime:     #c8f06e;
-  --lime-dim: rgba(200,240,110,0.08);
+  --muted:    #a09a93;
+  --muted2:   #5a554f;
+  --green:    #4ade80;
+  --green-dim:rgba(74,222,128,0.1);
+  --green-ring:rgba(74,222,128,0.25);
   --red:      #ff5a5a;
   --red-dim:  rgba(255,90,90,0.08);
+  --red-ring: rgba(255,90,90,0.25);
   --amber:    #f0b464;
   --blue:     #7eb8f5;
-  --mono:     'DM Mono', monospace;
-  --serif:    'Fraunces', serif;
-  --sans:     'Syne', sans-serif;
+  --blue-dim: rgba(126,184,245,0.08);
+  --lime:     #c8f06e;
+  --lime-dim: rgba(200,240,110,0.08);
+  --mono: 'DM Mono', monospace;
+  --serif:'Fraunces', serif;
+  --sans: 'Syne', sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:14px;}
-body{
-  font-family:var(--sans);background:var(--bg);color:var(--text);
-  min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;
-}
-body::before{
-  content:'';position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
-  background-size:64px 64px;opacity:0.18;pointer-events:none;
-}
+html{font-size:14px;scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:64px 64px;opacity:0.18;pointer-events:none;}
 #root{position:relative;z-index:1;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-.wrapper{max-width:1400px;margin:0 auto;padding:0 20px 60px;}
+.wrapper{max-width:1400px;margin:0 auto;padding:0 24px 80px;}
 
-/* TOPBAR */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
 .logo-mark{display:flex;align-items:center;gap:14px;}
-.logo-icon{width:38px;height:38px;border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);flex-shrink:0;}
-.logo-title{font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
-.logo-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
+.logo-icon{width:38px;height:38px;border:1px solid var(--border2);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);flex-shrink:0;position:relative;overflow:hidden;}
+.logo-icon::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,240,110,0.07),transparent);}
+.logo-title{font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+.logo-sub{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:3px;letter-spacing:0.06em;}
 .topbar-right{display:flex;align-items:center;gap:14px;}
-.status-pill{display:flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid var(--border2);border-radius:100px;background:var(--surface);font-family:var(--mono);font-size:11px;color:var(--text2);}
+.status-pill{display:flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid var(--border2);border-radius:100px;background:var(--surface);font-family:var(--mono);font-size:11px;color:var(--muted);}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);flex-shrink:0;}
-.clock-text{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.clock-text{font-family:var(--mono);font-size:12px;color:var(--muted2);letter-spacing:0.04em;}
 
-/* HERO */
-.hero{padding:32px 0 28px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;}
-.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+/* ── HERO ── */
+.hero{padding:52px 0 44px;border-bottom:1px solid var(--border);}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .eyebrow-line{width:22px;height:1px;background:var(--lime);opacity:0.6;}
 .eyebrow-text{font-family:var(--mono);font-size:10px;color:var(--lime);letter-spacing:0.14em;text-transform:uppercase;opacity:0.8;}
-.hero-h1{font-family:var(--serif);font-size:clamp(34px,5.5vw,70px);font-weight:300;letter-spacing:-0.03em;line-height:0.95;color:var(--text);}
-.hero-h1 em{font-style:italic;color:var(--text2);font-weight:300;}
-.hero-desc{font-family:var(--sans);font-size:12px;color:var(--text2);line-height:1.75;max-width:400px;margin-top:14px;font-weight:400;}
-.hero-version{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;}
+.hero-h1{font-family:var(--serif);font-size:clamp(44px,5.5vw,76px);font-weight:300;letter-spacing:-0.03em;line-height:0.95;}
+.hero-h1 em{font-style:italic;color:var(--muted);font-weight:300;}
+.hero-desc{font-size:13px;color:var(--muted);line-height:1.75;max-width:480px;margin-top:16px;font-weight:400;}
+.hero-meta{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap;}
+.hero-tag{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.08em;border:1px solid var(--border2);padding:4px 10px;border-radius:5px;}
 
-/* MAIN GRID */
-.main-grid{display:grid;grid-template-columns:320px 1fr;gap:1px;border:1px solid var(--border);border-top:none;}
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:330px 1fr;gap:1px;border:1px solid var(--border);border-top:none;}
+@media(max-width:800px){.main-grid{grid-template-columns:1fr;}}
+
+/* ── PANELS ── */
 .panel{background:var(--surface);padding:28px 24px;}
 .panel-left{border-right:1px solid var(--border);}
-.panel-right{background:var(--bg);padding:28px;}
-.panel-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.panel-right{background:var(--bg);padding:28px 32px;}
+@media(max-width:800px){.panel-left{border-right:none;border-bottom:1px solid var(--border);}.panel-right{padding:24px 20px;}}
+.panel-label{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border);}
 
-/* MOBILE */
-@media(max-width:760px){
-  .main-grid{grid-template-columns:1fr;}
-  .panel-left{border-right:none;border-bottom:1px solid var(--border);}
-  .panel-right{padding:24px 20px;}
-  .wrapper{padding:0 14px 60px;}
-  .hero{padding:22px 0;}
-  .hero-version,.clock-text{display:none;}
-  .confidence-num{font-size:40px!important;}
-}
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;}
 
-/* SLIDER */
-.slider-wrap{margin-bottom:22px;}
-.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
-.slider-label{font-size:12px;font-weight:500;color:var(--text2);}
-.slider-val{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--surface3);border:1px solid var(--border2);padding:2px 9px;border-radius:5px;}
-input[type=range]{-webkit-appearance:none;width:100%;height:1px;background:var(--border2);border-radius:1px;outline:none;cursor:pointer;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--text);border:3px solid var(--bg);box-shadow:0 0 0 1px var(--border2);cursor:pointer;transition:box-shadow 0.15s;}
-input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 5px rgba(200,240,110,0.18);}
-input[type=range]::-moz-range-thumb{width:18px;height:18px;border:3px solid var(--bg);border-radius:50%;background:var(--text);cursor:pointer;}
+/* ── BADGE / CHIP ── */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.02em;}
+.badge-safe{background:var(--green-dim);color:var(--green);border:1px solid var(--green-ring);}
+.badge-danger{background:var(--red-dim);color:var(--red);border:1px solid var(--red-ring);}
+.badge-neutral{background:var(--surface3);color:var(--muted);border:1px solid var(--border2);}
 
-/* BUTTON */
-.run-btn{width:100%;padding:14px 20px;background:var(--lime);color:#0a0f02;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity 0.15s,transform 0.12s,box-shadow 0.2s;margin-top:8px;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;}
-.run-btn:hover:not(:disabled){opacity:0.9;box-shadow:0 8px 32px rgba(200,240,110,0.2);}
-.run-btn:active:not(:disabled){transform:scale(0.98);}
-.run-btn:disabled{opacity:0.35;cursor:not-allowed;background:var(--surface3);color:var(--text3);}
+/* ── SLIDER ── */
+.slider-wrap{margin-bottom:20px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.slider-label{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.04em;}
+.slider-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);padding:2px 9px;border-radius:5px;border:1px solid var(--border);}
+input[type=range]{-webkit-appearance:none;width:100%;height:2px;background:var(--border2);border-radius:1px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--text);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--border2);cursor:pointer;transition:box-shadow 0.15s,transform 0.12s;}
+input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 4px rgba(200,240,110,0.18);transform:scale(1.1);}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:2px solid var(--bg);border-radius:50%;background:var(--text);cursor:pointer;}
 
-/* LOADING */
-.loading-bar-track{width:100%;height:2px;background:var(--border2);border-radius:1px;margin-top:14px;overflow:hidden;}
+/* ── INFO TOOLTIP ── */
+.info-btn{width:16px;height:16px;border-radius:50%;border:1px solid var(--border2);background:var(--surface3);color:var(--muted2);font-family:var(--mono);font-size:9px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color 0.15s,color 0.15s;line-height:1;}
+.info-btn:hover{border-color:var(--lime);color:var(--lime);}
+.tooltip-wrap{position:relative;display:inline-flex;}
+.tooltip-box{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);z-index:100;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;width:240px;pointer-events:none;}
+.tooltip-box::before{content:'';position:absolute;left:-5px;top:50%;transform:translateY(-50%);width:8px;height:8px;background:var(--surface2);border-left:1px solid var(--border2);border-bottom:1px solid var(--border2);transform:translateY(-50%) rotate(45deg);}
+.tooltip-title{font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:0.02em;}
+.tooltip-desc{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px;}
+.tooltip-example{font-family:var(--mono);font-size:10px;color:var(--lime);background:var(--lime-dim);border:1px solid rgba(200,240,110,0.2);padding:4px 8px;border-radius:5px;}
+
+/* ── RUN BUTTON ── */
+.run-btn{width:100%;padding:13px 20px;background:var(--lime);color:#0a0f02;border:none;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:opacity 0.15s,transform 0.12s,box-shadow 0.2s;margin-top:6px;position:relative;overflow:hidden;}
+.run-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.07),transparent);}
+.run-btn:hover:not(:disabled){opacity:0.9;transform:translateY(-1px);box-shadow:0 8px 28px rgba(200,240,110,0.2);}
+.run-btn:active:not(:disabled){transform:translateY(0);}
+.run-btn:disabled{opacity:0.3;cursor:not-allowed;background:var(--surface3);color:var(--muted2);}
+
+/* ── LOADING BAR ── */
+.loading-bar-track{width:100%;height:2px;background:var(--border2);border-radius:1px;margin-top:12px;overflow:hidden;}
 @keyframes indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
 .loading-bar-fill{height:100%;width:25%;background:var(--lime);border-radius:1px;animation:indeterminate 1.6s ease-in-out infinite;}
-.loading-status{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
-.loading-text{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;}
+.loading-status{display:flex;justify-content:space-between;margin-top:6px;}
+.loading-txt{font-family:var(--mono);font-size:10px;color:var(--muted2);}
 .loading-timer{font-family:var(--mono);font-size:10px;color:var(--lime);}
 
-/* INPUT SUMMARY */
-.input-summary{margin-top:22px;padding-top:22px;border-top:1px solid var(--border);}
+/* ── INPUT SUMMARY ── */
+.input-summary{margin-top:20px;padding-top:18px;border-top:1px solid var(--border);}
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
 .summary-row:last-child{border-bottom:none;}
-.summary-key{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.05em;}
-.summary-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);}
+.summary-key{font-family:var(--mono);font-size:10px;color:var(--muted2);}
+.summary-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted);}
 
-/* EMPTY */
-.empty-state{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
-.empty-icon{width:52px;height:52px;border:1px solid var(--border2);border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--surface);}
-.empty-text{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.06em;}
-.empty-hint{font-family:var(--sans);font-size:12px;color:var(--text3);max-width:260px;line-height:1.7;}
+/* ── PROGRESS BAR ── */
+.progress-track{height:2px;background:var(--border2);border-radius:1px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:1px;transition:width 0.7s cubic-bezier(.4,0,.2,1);}
 
-/* DECISION */
-.decision-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden;}
+/* ── DECISION CARD ── */
+.decision-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 28px;position:relative;overflow:hidden;}
 .decision-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;}
-.decision-card.safe::before{background:linear-gradient(90deg,transparent,var(--lime),transparent);}
+.decision-card.safe::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
 .decision-card.danger::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
-.decision-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
-.decision-badges{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:100px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;border:1px solid;}
-.chip-safe{background:var(--lime-dim);color:var(--lime);border-color:rgba(200,240,110,0.3);}
-.chip-danger{background:var(--red-dim);color:var(--red);border-color:rgba(255,90,90,0.3);}
-.chip-neutral{background:var(--surface3);color:var(--text3);border-color:var(--border2);}
-.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
-.decision-reason{font-family:var(--serif);font-size:clamp(18px,3vw,28px);font-weight:300;letter-spacing:-0.02em;line-height:1.2;margin-bottom:10px;}
-.decision-ts{font-family:var(--mono);font-size:10px;color:var(--text3);}
-.confidence-block{text-align:right;flex-shrink:0;}
-.confidence-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
-.confidence-num{font-family:var(--sans);font-size:52px;font-weight:800;line-height:1;letter-spacing:-0.04em;}
-.confidence-unit{font-size:20px;font-weight:500;}
 
-/* NUMBERS */
-.number-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.number-cell{background:var(--surface);padding:16px 14px;text-align:center;}
-.number-cell-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
-.number-cell-val{font-family:var(--sans);font-size:clamp(16px,2.5vw,24px);font-weight:700;letter-spacing:-0.03em;line-height:1;}
+/* ── EMPTY STATE ── */
+.empty-state{min-height:440px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
+.empty-hint{font-size:12px;color:var(--muted2);max-width:260px;line-height:1.75;}
 
-/* BARS */
-.bars-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:14px;}
-.bar-row{margin-bottom:18px;}
-.bar-row:last-child{margin-bottom:0;}
-.bar-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-.bar-label{font-size:12px;font-weight:500;color:var(--text2);}
-.bar-val{font-family:var(--mono);font-size:12px;color:var(--text);}
-.bar-track{height:2px;background:var(--border2);border-radius:1px;position:relative;}
-.bar-fill{height:100%;border-radius:1px;position:relative;transition:width 0.8s cubic-bezier(.4,0,.2,1);}
-.bar-fill::after{content:'';position:absolute;right:-1px;top:-3px;width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor;}
+/* ── CHART PANEL ── */
+.chart-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-top:14px;}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.chart-title{font-size:12px;font-weight:600;color:var(--muted);}
+.chart-legend{display:flex;gap:14px;}
+.legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--muted2);}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
 
-/* SPARK */
-.spark-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;}
-.spark-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.spark-title{font-size:12px;font-weight:600;color:var(--text2);}
-.spark-stats{display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
-.spark-stat{text-align:center;}
-.spark-stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
-.spark-stat-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
+/* ── BATTERY ANIMATION ── */
+.battery-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 0;}
+.battery-body{position:relative;width:56px;height:100px;border:2px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--surface3);}
+.battery-terminal{width:20px;height:6px;background:var(--border2);border-radius:3px 3px 0 0;margin:0 auto;}
+.battery-fill{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 6px 6px;transition:height 1.2s cubic-bezier(.4,0,.2,1);}
+.battery-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text);z-index:2;}
+@keyframes chargeShimmer{0%{opacity:0.5}50%{opacity:1}100%{opacity:0.5}}
+.battery-charging{animation:chargeShimmer 1.2s ease-in-out infinite;}
+@keyframes boltPulse{0%,100%{opacity:0.4;transform:translate(-50%,-50%) scale(0.9)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}}
+.bolt-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;animation:boltPulse 1.2s ease-in-out infinite;}
 
-/* ERROR */
-.error-box{margin-top:14px;padding:12px 14px;border-radius:8px;background:var(--red-dim);border:1px solid rgba(255,90,90,0.25);font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.7;word-break:break-word;}
+/* ── MODEL INFO SECTION ── */
+.model-section{margin-top:48px;border-top:1px solid var(--border);padding-top:40px;}
+.model-section-title{font-family:var(--serif);font-size:clamp(28px,3vw,42px);font-weight:300;letter-spacing:-0.02em;margin-bottom:8px;}
+.model-section-title em{font-style:italic;color:var(--muted);}
+.model-subtitle{font-size:13px;color:var(--muted);line-height:1.7;max-width:560px;margin-bottom:36px;}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px;}
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;position:relative;overflow:hidden;}
+.agent-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:2px;}
+.agent-num{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;}
+.agent-name{font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:0.01em;margin-bottom:10px;}
+.agent-desc{font-size:12px;color:var(--muted);line-height:1.75;}
+.agent-out{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--muted2);line-height:1.6;}
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+.concept-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+.concept-label{font-family:var(--mono);font-size:10px;color:var(--lime);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+.concept-title{font-size:13px;font-weight:600;margin-bottom:6px;}
+.concept-desc{font-size:12px;color:var(--muted);line-height:1.7;}
 
-/* FOOTER */
-.footer{border-top:1px solid var(--border);padding:20px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-.footer-text{font-family:var(--mono);font-size:10px;color:var(--text3);}
+/* ── FOOTER ── */
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.footer-text{font-family:var(--mono);font-size:10px;color:var(--muted2);}
 
-.reset-btn{background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;-webkit-tap-highlight-color:transparent;}
-.reset-btn:hover{color:var(--text2);}
-
-/* ANIMATIONS */
+/* ── ANIMATIONS ── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp 0.45s cubic-bezier(.4,0,.2,1) both;}
-.fade-up-1{animation-delay:0.05s;}
-.fade-up-2{animation-delay:0.1s;}
-.fade-up-3{animation-delay:0.15s;}
+.fade-up-1{animation-delay:0.06s;}
+.fade-up-2{animation-delay:0.12s;}
+.fade-up-3{animation-delay:0.18s;}
+.fade-up-4{animation-delay:0.24s;}
 @keyframes pulseLime{0%,100%{opacity:1}50%{opacity:0.5}}
 .pulse-live{animation:pulseLime 2.8s ease infinite;}
-@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
 .dot-loader{display:flex;gap:4px;align-items:center;}
 .dot-loader span{display:inline-block;width:4px;height:4px;border-radius:50%;background:#0a0f02;}
-.dot-loader span:nth-child(1){animation:bounce 1.1s ease infinite 0s}
-.dot-loader span:nth-child(2){animation:bounce 1.1s ease infinite 0.15s}
-.dot-loader span:nth-child(3){animation:bounce 1.1s ease infinite 0.3s}
-@keyframes indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+.dot-loader span:nth-child(1){animation:dotBounce 1.1s ease infinite 0s}
+.dot-loader span:nth-child(2){animation:dotBounce 1.1s ease infinite 0.14s}
+.dot-loader span:nth-child(3){animation:dotBounce 1.1s ease infinite 0.28s}
+.reset-btn{background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s;}
+.reset-btn:hover{color:var(--muted);}
+
+/* ── SVG CHART LINE ANIMATION ── */
+@keyframes drawLine{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+.chart-line-animated{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:drawLine 1.2s cubic-bezier(.4,0,.2,1) forwards;}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-const Sparkline = ({ data }) => {
-  if (!data || data.length < 2) return (
-    <div style={{height:'72px',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--text3)'}}>— no data —</span>
-    </div>
-  );
-  const W=600,H=72,P=6;
-  const vals=data.map(d=>d.temp);
-  const mn=Math.min(...vals)-0.5,mx=Math.max(...vals)+0.5,rng=mx-mn||1;
-  const px=i=>P+(i/(data.length-1))*(W-P*2);
-  const py=v=>H-P-((v-mn)/rng)*(H-P*2);
-  const pts=data.map((d,i)=>`${px(i).toFixed(1)},${py(d.temp).toFixed(1)}`).join(' ');
-  const area=`${P},${H-P} ${pts} ${px(data.length-1).toFixed(1)},${H-P}`;
+/* ══════════════════════════════════════════════════════════
+   FIELD METADATA with tooltip info from the PDF
+══════════════════════════════════════════════════════════ */
+const FIELD_INFO = {
+  soc: {
+    title: 'State of Charge (SoC)',
+    desc: 'How full the battery is right now, from 0 (empty) to 1 (fully charged). A full 18650 cell sits near 4.2V; empty near 3.0V. The Predictor refines this estimate using Transformer inference.',
+    example: 'e.g. 0.45 means battery is 45% full',
+  },
+  soh: {
+    title: 'State of Health (SoH)',
+    desc: 'Overall battery condition relative to when it was new. 1.0 = brand new, 0.80 = end-of-life threshold. As SoH falls, internal resistance rises and usable capacity drops.',
+    example: 'e.g. 0.92 = 92% of original capacity',
+  },
+  temp_C: {
+    title: 'Temperature (°C)',
+    desc: 'Cell temperature in Celsius. The pipeline uses a thermal ECM model — charging faster generates more heat. Kill Agent aborts above 47°C (320 K) to prevent separator damage.',
+    example: 'e.g. 28°C is typical room temperature',
+  },
+  current_A: {
+    title: 'Current (A)',
+    desc: 'The initial discharge or charge current in Amperes. Negative = discharging, positive = charging. Higher current charges faster but increases heat and SoH degradation per cycle.',
+    example: 'e.g. 4.5 A is about 1C rate for a 4.5Ah cell',
+  },
+};
+
+/* ══════════════════════════════════════════════════════════
+   TOOLTIP COMPONENT
+══════════════════════════════════════════════════════════ */
+const InfoTooltip = ({ fieldKey }) => {
+  const [open, setOpen] = useState(false);
+  const info = FIELD_INFO[fieldKey];
+  if (!info) return null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="72" preserveAspectRatio="none" style={{display:'block'}}>
-      <defs>
-        <linearGradient id="spg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#c8f06e" stopOpacity="0.2"/>
-          <stop offset="100%" stopColor="#c8f06e" stopOpacity="0"/>
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#spg)"/>
-      <polyline points={pts} fill="none" stroke="#c8f06e" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-      {data.map((d,i)=>(
-        <circle key={i} cx={px(i)} cy={py(d.temp)} r={i===data.length-1?3:2}
-                fill="#c8f06e" opacity={i===data.length-1?1:0.5}/>
-      ))}
-    </svg>
+    <div className="tooltip-wrap"
+         onMouseEnter={()=>setOpen(true)}
+         onMouseLeave={()=>setOpen(false)}>
+      <button className="info-btn" aria-label="Info" onClick={()=>setOpen(o=>!o)}>i</button>
+      {open && (
+        <div className="tooltip-box">
+          <div className="tooltip-title">{info.title}</div>
+          <div className="tooltip-desc">{info.desc}</div>
+          <div className="tooltip-example">{info.example}</div>
+        </div>
+      )}
+    </div>
   );
 };
 
-const GaugeBar = ({ label, value, max=1, color, format }) => {
-  const pct=Math.min(Math.max(value/max,0),1)*100;
-  const display=format?format(value):`${(value*100).toFixed(1)}%`;
-  return (
-    <div className="bar-row">
-      <div className="bar-header">
-        <span className="bar-label">{label}</span>
-        <span className="bar-val" style={{color}}>{display}</span>
-      </div>
-      <div className="bar-track">
-        <div className="bar-fill" style={{width:`${pct}%`,background:color,color}}/>
-      </div>
-    </div>
-  );
-};
-
-const Slider = ({ label, value, min, max, step, unit, onChange }) => (
+/* ══════════════════════════════════════════════════════════
+   SLIDER with info icon
+══════════════════════════════════════════════════════════ */
+const Slider = ({ fieldKey, label, value, min, max, step, unit, onChange }) => (
   <div className="slider-wrap">
     <div className="slider-header">
-      <label className="slider-label">{label}</label>
+      <label className="slider-label">
+        {label}
+        <InfoTooltip fieldKey={fieldKey}/>
+      </label>
       <span className="slider-val">{value}{unit}</span>
     </div>
     <input type="range" min={min} max={max} step={step} value={value}
@@ -260,34 +280,299 @@ const Slider = ({ label, value, min, max, step, unit, onChange }) => (
   </div>
 );
 
+/* ══════════════════════════════════════════════════════════
+   GAUGE BAR
+══════════════════════════════════════════════════════════ */
+const GaugeBar = ({ label, value, max=1, color, format }) => {
+  const pct=Math.min(Math.max(value/max,0),1)*100;
+  const display=format?format(value):`${(value*100).toFixed(1)}%`;
+  return (
+    <div style={{marginBottom:'18px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'8px'}}>
+        <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)',letterSpacing:'0.05em'}}>{label}</span>
+        <span style={{fontFamily:'var(--mono)',fontSize:'13px',fontWeight:500,color}}>{display}</span>
+      </div>
+      <div className="progress-track">
+        <div className="progress-fill" style={{width:`${pct}%`,background:color}}/>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
+   STAT TILE
+══════════════════════════════════════════════════════════ */
+const Tile = ({ label, value, sub, color='var(--text)' }) => (
+  <div className="card" style={{padding:'18px 20px'}}>
+    <p style={{fontFamily:'var(--mono)',fontSize:'9px',color:'var(--muted2)',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'8px'}}>{label}</p>
+    <p style={{fontFamily:'var(--mono)',fontSize:'20px',fontWeight:500,color,lineHeight:1}}>{value}</p>
+    {sub && <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',marginTop:'5px'}}>{sub}</p>}
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════
+   BATTERY ANIMATION
+══════════════════════════════════════════════════════════ */
+const BatteryViz = ({ soc, isCharging, decision }) => {
+  const pct = Math.min(Math.max((soc||0)*100, 0), 100);
+  const safe = decision === 'SAFE';
+  const color = pct > 60 ? 'var(--lime)' : pct > 25 ? 'var(--amber)' : 'var(--red)';
+  return (
+    <div className="battery-wrap">
+      <div className="battery-terminal" style={{background: isCharging ? color : 'var(--border2)'}}/>
+      <div className="battery-body">
+        <div className="battery-fill"
+             style={{
+               height:`${pct}%`,
+               background: isCharging
+                 ? `linear-gradient(180deg, ${color}cc, ${color})`
+                 : `linear-gradient(180deg, ${color}88, ${color}bb)`,
+             }}
+             className={isCharging ? 'battery-charging' : ''}
+        />
+        <div className="battery-pct">{Math.round(pct)}%</div>
+        {isCharging && (
+          <svg className="bolt-icon" width="14" height="14" viewBox="0 0 24 24"
+               fill={color} style={{filter:`drop-shadow(0 0 4px ${color})`}}>
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        )}
+      </div>
+      <div style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',letterSpacing:'0.06em',textAlign:'center'}}>
+        {isCharging ? 'charging…' : decision ? (safe ? 'approved' : 'check state') : 'idle'}
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
+   MULTI-LINE LIVE CHART (SVG, animated draw-on)
+   series: [{key, color, label, data:[{x,y}]}]
+══════════════════════════════════════════════════════════ */
+const LiveChart = ({ series, height=100, yLabel='', animKey=0 }) => {
+  const W=600, H=height, PX=10, PY=8;
+
+  // Compute global y-range across all series
+  const allY = series.flatMap(s=>s.data.map(d=>d.y));
+  if (allY.length === 0) return (
+    <div style={{height:`${height}px`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted2)'}}>— no data yet —</span>
+    </div>
+  );
+
+  const allX = series.flatMap(s=>s.data.map(d=>d.x));
+  const minX=Math.min(...allX), maxX=Math.max(...allX)||1;
+  const minY=Math.min(...allY), maxY=Math.max(...allY);
+  const padY=(maxY-minY)*0.12||0.5;
+  const yn=minY-padY, yx=maxY+padY, yr=yx-yn;
+
+  const px = x => PX + ((x-minX)/(maxX-minX||1))*(W-PX*2);
+  const py = y => H-PY-((y-yn)/yr)*(H-PY*2);
+
+  // Estimate path length roughly for animation
+  const pathLen = s => {
+    if(s.data.length<2) return 0;
+    return s.data.reduce((acc,d,i)=>{
+      if(i===0) return 0;
+      const prev=s.data[i-1];
+      const dx=px(d.x)-px(prev.x), dy=py(d.y)-py(prev.y);
+      return acc+Math.sqrt(dx*dx+dy*dy);
+    },0);
+  };
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height}
+         preserveAspectRatio="none" style={{display:'block',overflow:'visible'}}>
+      <defs>
+        {series.map(s=>(
+          <linearGradient key={s.key+'g'} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={s.color} stopOpacity="0.18"/>
+            <stop offset="100%" stopColor={s.color} stopOpacity="0"/>
+          </linearGradient>
+        ))}
+      </defs>
+
+      {/* subtle grid lines */}
+      {[0.25,0.5,0.75].map(f=>{
+        const gy=PY+(1-f)*(H-PY*2);
+        return <line key={f} x1={PX} y1={gy} x2={W-PX} y2={gy}
+                     stroke="var(--border)" strokeWidth="1" strokeDasharray="4,4"/>;
+      })}
+
+      {series.map(s=>{
+        if(s.data.length<2) return null;
+        const pts=s.data.map(d=>`${px(d.x).toFixed(1)},${py(d.y).toFixed(1)}`).join(' ');
+        const first=s.data[0], last=s.data[s.data.length-1];
+        const area=`${px(first.x).toFixed(1)},${H-PY} ${pts} ${px(last.x).toFixed(1)},${H-PY}`;
+        const len=pathLen(s).toFixed(0);
+        return (
+          <g key={s.key}>
+            <polygon points={area} fill={`url(#grad-${s.key})`} opacity="0.9"/>
+            <polyline
+              key={`${s.key}-${animKey}`}
+              points={pts}
+              fill="none" stroke={s.color} strokeWidth="2"
+              strokeLinejoin="round" strokeLinecap="round"
+              style={{'--len':len}}
+              className="chart-line-animated"
+            />
+            {/* last point dot */}
+            <circle cx={px(last.x)} cy={py(last.y)} r="4" fill={s.color}
+                    style={{filter:`drop-shadow(0 0 5px ${s.color})`}}/>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
+   SPARKLINE (temp history, kept from original)
+══════════════════════════════════════════════════════════ */
+const Sparkline = ({ data, color='#7eb8f5' }) => {
+  if (!data || data.length < 2) return (
+    <div style={{height:'72px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted2)'}}>— no readings yet —</span>
+    </div>
+  );
+  const W=600,H=72,P=6;
+  const vals=data.map(d=>d.temp);
+  const mn=Math.min(...vals)-0.3,mx=Math.max(...vals)+0.3,rng=mx-mn||1;
+  const px=i=>P+(i/(data.length-1))*(W-P*2);
+  const py=v=>H-P-((v-mn)/rng)*(H-P*2);
+  const pts=data.map((d,i)=>`${px(i).toFixed(1)},${py(d.temp).toFixed(1)}`).join(' ');
+  const area=`${P},${H-P} ${pts} ${px(data.length-1).toFixed(1)},${H-P}`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="72" preserveAspectRatio="none" style={{display:'block'}}>
+      <defs>
+        <linearGradient id="spg2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#spg2)"/>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+      {data.map((d,i)=>(
+        <circle key={i} cx={px(i)} cy={py(d.temp)} r={i===data.length-1?3:2}
+                fill={color} opacity={i===data.length-1?1:0.6}/>
+      ))}
+    </svg>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
+   MODEL INFO SECTION — content from the PDF
+══════════════════════════════════════════════════════════ */
+const ModelInfo = () => {
+  const agents = [
+    {
+      num:'Agent 01', name:'Predictor',
+      color:'var(--blue)',
+      desc:'Takes 64 timesteps of sensor readings and runs them through a Transformer neural network — the same architecture used in language translation. It asks three separate questions: what is the SoC? The SoH? The temperature? Each answer comes with a confidence score.',
+      out:'→ Predicted SoC, SoH, Temperature + confidence score (0–1)',
+    },
+    {
+      num:'Agent 02', name:'Simulator + Optimiser',
+      color:'var(--lime)',
+      desc:'Sets up an ECM (Equivalent Circuit Model) with the predicted state as the starting point. First a Genetic Algorithm (GA) runs 40 profiles × 25 generations for a warm-up. Then NSGA-II runs a 3-objective Pareto optimisation — maximise SoC gain, minimise peak temp, minimise SoH loss — producing 60 charging profiles.',
+      out:'→ 60 Pareto-optimal charging profiles (CSV)',
+    },
+    {
+      num:'Agent 03', name:'Meta-Agent',
+      color:'var(--amber)',
+      desc:'Looks at the 60 profiles and picks one using a priority rule set: if confidence is low → Gentle. If SoH < 0.90 → Gentle. If SoC < 0.40 and battery is healthy → Fast. If a manual mode was requested → honour it. Default → Balanced.',
+      out:'→ Selected policy ID + reasoning text',
+    },
+    {
+      num:'Agent 04', name:'Kill Agent',
+      color:'var(--red)',
+      desc:'The safety gate. Checks 6 rules: peak temp > 320K? Temp rise > 5K/s? Sustained heat > 315K? SoH loss > 0.001? SoH < 0.80? Low confidence? ALLOW passes all. OVERRIDE finds the gentlest safe profile. ABORT if nothing is safe.',
+      out:'→ ALLOW / OVERRIDE / ABORT + reason',
+    },
+  ];
+
+  const concepts = [
+    {label:'Dataset',title:'NASA Li-ion Data',desc:'Hundreds of charge-discharge cycles on 18650 cells measuring voltage, current and temperature. Used to fit the OCV polynomial and train the Transformer.'},
+    {label:'ECM',title:'Equivalent Circuit Model',desc:'Models the battery as R0 (internal resistance) + R1/C1 branch (transient polarisation) + OCV source. Simulates terminal voltage and temperature at every timestep.'},
+    {label:'OCV Curve',title:'Open Circuit Voltage',desc:'The S-shaped voltage vs SoC relationship fitted to a 5th-degree polynomial from NASA data. Full battery ≈ 4.2V, empty ≈ 3.0V.'},
+    {label:'Pareto Front',title:'Multi-Objective Optimisation',desc:'NSGA-II finds 60 non-dominated profiles where you cannot improve one objective (charge speed, temperature, degradation) without making another worse.'},
+    {label:'Confidence',title:'Bayesian Uncertainty',desc:'Each Transformer output produces a mean and log-variance. Low confidence triggers conservative decisions throughout the pipeline — Gentle policy, Kill Agent override.'},
+    {label:'CC-CV',title:'Baseline Comparison',desc:'Standard Constant-Current Constant-Voltage charger used as baseline. Unlike the pipeline, it cannot adapt to SoH, detect overheating, or abort — the pipeline\'s advantages are explicit.'},
+  ];
+
+  return (
+    <div className="model-section">
+      <h2 className="model-section-title">How the <em>Pipeline Works</em></h2>
+      <p className="model-subtitle">
+        A 4-agent multi-stage system trained on NASA Li-ion battery data. Each agent does
+        one job and hands results forward. The confidence score threads through everything —
+        keeping the system honest about what it does and doesn't know.
+      </p>
+
+      <div className="agents-grid">
+        {agents.map(a=>(
+          <div key={a.num} className="agent-card" style={{'--accent':a.color}}>
+            <div style={{position:'absolute',top:0,left:0,bottom:0,width:'2px',background:a.color,borderRadius:'2px 0 0 2px'}}/>
+            <div className="agent-num">{a.num}</div>
+            <div className="agent-name" style={{color:a.color}}>{a.name}</div>
+            <div className="agent-desc">{a.desc}</div>
+            <div className="agent-out">{a.out}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{marginBottom:'20px',paddingBottom:'16px',borderBottom:'1px solid var(--border)'}}>
+        <span style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',letterSpacing:'0.1em',textTransform:'uppercase'}}>Key Concepts</span>
+      </div>
+      <div className="concepts-grid">
+        {concepts.map(c=>(
+          <div key={c.label} className="concept-card">
+            <div className="concept-label">{c.label}</div>
+            <div className="concept-title">{c.title}</div>
+            <div className="concept-desc">{c.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
+   FIELDS
+══════════════════════════════════════════════════════════ */
 const FIELDS=[
-  {key:'soc',       label:'State of Charge',min:0,  max:1, step:0.01,unit:'',  init:0.85},
-  {key:'soh',       label:'State of Health', min:0,  max:1, step:0.01,unit:'',  init:0.92},
-  {key:'temp_C',    label:'Temperature',     min:-20,max:80,step:0.5, unit:'°C',init:28  },
-  {key:'current_A', label:'Current',         min:0,  max:20,step:0.1, unit:' A',init:4.5 },
+  {key:'soc',      label:'State of Charge',min:0,  max:1, step:0.01,unit:'',  init:0.85},
+  {key:'soh',      label:'State of Health', min:0,  max:1, step:0.01,unit:'',  init:0.92},
+  {key:'temp_C',   label:'Temperature',     min:-20,max:80,step:0.5, unit:'°C',init:28  },
+  {key:'current_A',label:'Current',         min:0,  max:20,step:0.1, unit:' A',init:4.5 },
 ];
 const initInputs=Object.fromEntries(FIELDS.map(f=>[f.key,f.init]));
 
+/* ══════════════════════════════════════════════════════════
+   MAIN APP — identical API/state logic to the original
+══════════════════════════════════════════════════════════ */
 function App(){
-  const [inputs, setInputs] =useState(initInputs);
+  const [inputs, setInputs]=useState(initInputs);
   const [loading,setLoading]=useState(false);
   const [elapsed,setElapsed]=useState(0);
-  const [result, setResult] =useState(null);
-  const [history,setHistory]=useState([]);
-  const [error,  setError]  =useState(null);
-  const [rKey,   setRKey]   =useState(0);
-  const [clock,  setClock]  =useState('');
+  const [result, setResult]=useState(null);
+  const [history,setHistory]=useState([]);   // [{time,temp,soc,soh,idx}]
+  const [error,  setError]=useState(null);
+  const [rKey,   setRKey]=useState(0);
+  const [clock,  setClock]=useState('');
+  const [chartTab,setChartTab]=useState('soc'); // 'soc'|'soh'|'temp'|'all'
   const timerRef=useRef(null);
+  const runIdx=useRef(0);
 
   useEffect(()=>{
     const tick=()=>setClock(new Date().toLocaleTimeString('en-GB',{hour12:false}));
-    tick();const id=setInterval(tick,1000);return()=>clearInterval(id);
+    tick(); const id=setInterval(tick,1000); return()=>clearInterval(id);
   },[]);
 
   const set=(k,v)=>setInputs(p=>({...p,[k]:v}));
 
   const run=async()=>{
-    setLoading(true);setError(null);setElapsed(0);
+    setLoading(true); setError(null); setElapsed(0);
     timerRef.current=setInterval(()=>setElapsed(e=>e+1),1000);
     try{
       const res=await fetch('/predict',{
@@ -296,20 +581,52 @@ function App(){
       });
       const data=await res.json();
       if(data.status==='success'){
-        setResult(data);setRKey(k=>k+1);
+        runIdx.current+=1;
+        const idx=runIdx.current;
+        setResult(data); setRKey(k=>k+1);
         setHistory(h=>[...h,{
           time:new Date().toLocaleTimeString('en-GB',{hour12:false}).slice(0,5),
           temp:data.temperature,
-        }].slice(-16));
-      }else{setError(data.message||'Pipeline error');}
-    }catch(e){setError('Network: '+e.message);}
-    finally{clearInterval(timerRef.current);setLoading(false);}
+          soc:data.soc,
+          soh:data.soh,
+          idx,
+        }].slice(-20));
+      } else { setError(data.message||'Pipeline error'); }
+    } catch(e){ setError('Network: '+e.message); }
+    finally{ clearInterval(timerRef.current); setLoading(false); }
   };
 
   const safe=result?.decision==='SAFE';
 
+  // Build chart series from history
+  const socSeries=useMemo(()=>history.map((h,i)=>({x:i,y:h.soc})),[history]);
+  const sohSeries=useMemo(()=>history.map((h,i)=>({x:i,y:h.soh})),[history]);
+  const tempSeries=useMemo(()=>history.map((h,i)=>({x:i,y:h.temp})),[history]);
+
+  const chartSeries=useMemo(()=>{
+    if(chartTab==='all') return [
+      {key:'soc', color:'var(--blue)',  label:'SoC', data:socSeries},
+      {key:'soh', color:'var(--lime)',  label:'SoH', data:sohSeries},
+    ];
+    if(chartTab==='soc') return [{key:'soc', color:'var(--blue)',  label:'SoC',  data:socSeries}];
+    if(chartTab==='soh') return [{key:'soh', color:'var(--lime)',  label:'SoH',  data:sohSeries}];
+    if(chartTab==='temp') return [{key:'temp',color:'var(--amber)',label:'Temp', data:tempSeries}];
+    return [];
+  },[chartTab,socSeries,sohSeries,tempSeries]);
+
+  const tabStyle=(t)=>({
+    fontFamily:'var(--mono)',fontSize:'10px',letterSpacing:'0.08em',textTransform:'uppercase',
+    padding:'5px 12px',borderRadius:'5px',border:'1px solid',cursor:'pointer',
+    background: chartTab===t ? 'var(--surface2)' : 'transparent',
+    color: chartTab===t ? 'var(--text)' : 'var(--muted2)',
+    borderColor: chartTab===t ? 'var(--border2)' : 'transparent',
+    transition:'all 0.15s',
+  });
+
   return(
     <div className="wrapper">
+
+      {/* ── TOPBAR ── */}
       <header className="topbar">
         <div className="logo-mark">
           <div className="logo-icon">
@@ -321,7 +638,7 @@ function App(){
           </div>
           <div>
             <div className="logo-title">Battery Management System</div>
-            <div className="logo-sub">AI Intelligence · Pipeline v3</div>
+            <div className="logo-sub">AI Inference Pipeline · v3</div>
           </div>
         </div>
         <div className="topbar-right">
@@ -333,33 +650,45 @@ function App(){
         </div>
       </header>
 
+      {/* ── HERO ── */}
       <div className="hero">
-        <div>
-          <div className="hero-eyebrow">
-            <div className="eyebrow-line"/>
-            <span className="eyebrow-text">Neural Pipeline v3</span>
-          </div>
-          <h1 className="hero-h1">Cell Analytics<br/><em>Dashboard</em></h1>
-          <p className="hero-desc">
-            Configure battery telemetry and run the multi-agent neural pipeline
-            to receive real-time health predictions and policy recommendations.
-          </p>
+        <div className="hero-eyebrow">
+          <div className="eyebrow-line"/>
+          <span className="eyebrow-text">Neural Pipeline v3 · Multi-Agent</span>
         </div>
-        <div className="hero-version">PyTorch · FastAPI · React</div>
+        <h1 className="hero-h1">Cell Analytics <em>Dashboard</em></h1>
+        <p className="hero-desc">
+          Configure battery telemetry and run the 4-agent neural pipeline — Predictor → Simulator → Meta-Agent → Kill Agent — for real-time health predictions and charging policy recommendations.
+        </p>
+        <div className="hero-meta">
+          <span className="hero-tag">NASA Li-ion Data</span>
+          <span className="hero-tag">Transformer Predictor</span>
+          <span className="hero-tag">NSGA-II Optimiser</span>
+          <span className="hero-tag">ECM Physics Model</span>
+        </div>
       </div>
 
+      {/* ── MAIN GRID ── */}
       <div className="main-grid">
-        {/* LEFT */}
+
+        {/* ═══════════ LEFT PANEL ═══════════ */}
         <div className="panel panel-left">
           <div className="panel-label">
             <span>Parameters</span>
             <button className="reset-btn" onClick={()=>setInputs(initInputs)}>Reset</button>
           </div>
-          {FIELDS.map(f=>(
-            <Slider key={f.key} label={f.label} value={inputs[f.key]}
-              min={f.min} max={f.max} step={f.step} unit={f.unit}
-              onChange={v=>set(f.key,v)}/>
-          ))}
+
+          {/* Battery viz */}
+          <BatteryViz soc={result?.soc ?? inputs.soc} isCharging={loading} decision={result?.decision}/>
+
+          <div style={{borderTop:'1px solid var(--border)',paddingTop:'20px',marginTop:'4px'}}>
+            {FIELDS.map(f=>(
+              <Slider key={f.key} fieldKey={f.key} label={f.label} value={inputs[f.key]}
+                min={f.min} max={f.max} step={f.step} unit={f.unit}
+                onChange={v=>set(f.key,v)}/>
+            ))}
+          </div>
+
           <button className="run-btn" onClick={run} disabled={loading}>
             {loading?(
               <><div className="dot-loader"><span/><span/><span/></div><span>Analyzing</span></>
@@ -367,20 +696,29 @@ function App(){
               <><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run Pipeline</>
             )}
           </button>
+
           {loading&&(
             <div>
-              <div className="loading-bar-track">
-                <div className="loading-bar-fill"/>
-              </div>
+              <div className="loading-bar-track"><div className="loading-bar-fill"/></div>
               <div className="loading-status">
-                <span className="loading-text">Running neural pipeline…</span>
-                <span className="loading-timer">{elapsed}s elapsed</span>
+                <span className="loading-txt">Running neural pipeline…</span>
+                <span className="loading-timer">{elapsed}s</span>
               </div>
             </div>
           )}
-          {error&&<div className="error-box">{error}</div>}
+
+          {error&&(
+            <div style={{marginTop:'12px',padding:'12px 14px',borderRadius:'8px',
+                         background:'var(--red-dim)',border:'1px solid var(--red-ring)',
+                         fontFamily:'var(--mono)',fontSize:'11px',color:'var(--red)',
+                         lineHeight:'1.65',wordBreak:'break-word'}}>
+              {error}
+            </div>
+          )}
+
+          {/* Input summary */}
           <div className="input-summary">
-            <div className="panel-label" style={{marginBottom:'14px',paddingBottom:'12px'}}>
+            <div className="panel-label" style={{marginBottom:'14px',paddingBottom:'11px'}}>
               <span>Current Inputs</span>
             </div>
             {FIELDS.map(f=>(
@@ -392,97 +730,134 @@ function App(){
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* ═══════════ RIGHT PANEL ═══════════ */}
         <div className="panel panel-right">
           {!result?(
             <div className="empty-state">
-              <div className="empty-icon">
+              <div style={{width:'52px',height:'52px',border:'1px solid var(--border2)',borderRadius:'14px',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--surface)',marginBottom:'4px'}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
                      stroke="var(--border2)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="7" width="18" height="11" rx="2"/>
-                  <path d="M22 11v3"/>
+                  <rect x="2" y="7" width="18" height="11" rx="2"/><path d="M22 11v3"/>
                 </svg>
               </div>
-              <p className="empty-text">{loading?`running… (${elapsed}s)`:'awaiting analysis'}</p>
-              <p className="empty-hint">Set battery parameters and run the pipeline to see health predictions.</p>
+              <p style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted2)',letterSpacing:'0.06em'}}>
+                {loading?`running… (${elapsed}s)`:'awaiting analysis'}
+              </p>
+              <p className="empty-hint">Set battery parameters on the left and run the pipeline to see health predictions and charts.</p>
             </div>
           ):(
-            <div key={rKey}>
+            <div key={rKey} style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+
+              {/* DECISION CARD */}
               <div className={`decision-card fade-up ${safe?'safe':'danger'}`}>
-                <div className="decision-header">
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'16px',flexWrap:'wrap'}}>
                   <div style={{flex:1}}>
-                    <div className="decision-badges">
-                      <span className={`chip ${safe?'chip-safe':'chip-danger'}`}>
-                        <span className="chip-dot"/>{result.decision}
+                    <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+                      <span className={safe?'badge badge-safe':'badge badge-danger'}>
+                        <span style={{width:'5px',height:'5px',borderRadius:'50%',background:'currentColor',display:'inline-block'}}/>
+                        {result.decision}
                       </span>
-                      <span className="chip chip-neutral">Policy {result.policy_id}</span>
+                      <span className="badge badge-neutral">Policy {result.policy_id}</span>
                     </div>
-                    <div className="decision-reason" style={{color:safe?'var(--lime)':'var(--red)'}}>
+                    <h3 style={{fontFamily:'var(--serif)',fontSize:'clamp(18px,2.5vw,26px)',fontWeight:400,letterSpacing:'-0.02em',lineHeight:1.2,color:safe?'var(--lime)':'var(--red)',marginBottom:'8px'}}>
                       {result.reason}
-                    </div>
-                    <div className="decision-ts">{new Date().toLocaleString()}</div>
+                    </h3>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)'}}>{new Date().toLocaleString()}</p>
                   </div>
-                  <div className="confidence-block">
-                    <div className="confidence-label">Confidence</div>
-                    <div className="confidence-num" style={{color:safe?'var(--lime)':'var(--red)'}}>
-                      {(result.confidence*100).toFixed(0)}<span className="confidence-unit">%</span>
-                    </div>
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',letterSpacing:'0.08em',marginBottom:'4px'}}>CONFIDENCE</p>
+                    <p style={{fontFamily:'var(--mono)',fontSize:'clamp(36px,4vw,48px)',fontWeight:500,lineHeight:1,color:safe?'var(--lime)':'var(--red)'}}>
+                      {(result.confidence*100).toFixed(0)}<span style={{fontSize:'18px',fontWeight:400}}>%</span>
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="number-row fade-up fade-up-1">
-                {[
-                  {label:'SOC Output', val:`${(result.soc*100).toFixed(1)}%`,  color:'var(--blue)'},
-                  {label:'SOH Output', val:`${(result.soh*100).toFixed(1)}%`,  color:'var(--lime)'},
-                  {label:'Temperature',val:`${result.temperature.toFixed(1)}°C`,color:'var(--amber)'},
-                ].map(c=>(
-                  <div key={c.label} className="number-cell">
-                    <div className="number-cell-label">{c.label}</div>
-                    <div className="number-cell-val" style={{color:c.color}}>{c.val}</div>
-                  </div>
-                ))}
+              {/* STAT TILES */}
+              <div className="fade-up fade-up-1" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'10px'}}>
+                <Tile label="SOC Output"   value={`${(result.soc*100).toFixed(1)}%`}   sub="State of Charge" color="var(--blue)"/>
+                <Tile label="SOH Output"   value={`${(result.soh*100).toFixed(1)}%`}   sub="State of Health" color="var(--lime)"/>
+                <Tile label="Temperature"  value={`${result.temperature.toFixed(1)}°C`} sub="Cell temperature" color="var(--amber)"/>
               </div>
 
-              <div className="bars-panel fade-up fade-up-2">
-                <div className="panel-label" style={{marginBottom:'16px',paddingBottom:'12px'}}>
-                  <span>Output Metrics</span>
-                </div>
+              {/* GAUGE BARS */}
+              <div className="card fade-up fade-up-2" style={{padding:'20px 24px'}}>
+                <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:'18px'}}>Output Metrics</p>
                 <GaugeBar label="State of Charge (SOC)" value={result.soc} max={1} color="var(--blue)"/>
-                <GaugeBar label="State of Health (SOH)" value={result.soh} max={1} color="var(--lime)"/>
+                <GaugeBar label="State of Health (SOH)"  value={result.soh} max={1} color="var(--lime)"/>
                 <GaugeBar label="Temperature" value={result.temperature} max={80}
                           color="var(--amber)" format={v=>`${v.toFixed(1)} °C`}/>
               </div>
 
-              <div className="spark-panel fade-up fade-up-3">
-                <div className="spark-header">
-                  <span className="spark-title">Temperature History</span>
-                  <span className="chip chip-neutral">{history.length} readings</span>
+              {/* LIVE MULTI-LINE CHART */}
+              {history.length >= 2 && (
+                <div className="chart-panel fade-up fade-up-3">
+                  <div className="chart-header">
+                    <span className="chart-title">Live Session Trends</span>
+                    <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                      {[['soc','SoC'],['soh','SoH'],['temp','Temp'],['all','SOC+SOH']].map(([t,l])=>(
+                        <button key={t} style={tabStyle(t)} onClick={()=>setChartTab(t)}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="chart-legend" style={{marginBottom:'12px'}}>
+                    {chartSeries.map(s=>(
+                      <div key={s.key} className="legend-item">
+                        <div className="legend-dot" style={{background:s.color}}/>
+                        {s.label}
+                      </div>
+                    ))}
+                    <span style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',marginLeft:'auto'}}>
+                      {history.length} runs
+                    </span>
+                  </div>
+                  <LiveChart series={chartSeries} height={110} animKey={`${chartTab}-${rKey}`}/>
+                  {/* X-axis labels */}
+                  <div style={{display:'flex',justifyContent:'space-between',marginTop:'8px'}}>
+                    {history.length>0&&[0,Math.floor(history.length/2),history.length-1].map(i=>(
+                      <span key={i} style={{fontFamily:'var(--mono)',fontSize:'9px',color:'var(--muted2)'}}>
+                        {history[i]?.time}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <Sparkline data={history}/>
+              )}
+
+              {/* TEMPERATURE SPARKLINE HISTORY */}
+              <div className="card fade-up fade-up-4" style={{padding:'20px 24px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
+                  <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',letterSpacing:'0.08em',textTransform:'uppercase'}}>Temperature History</p>
+                  <span className="badge badge-neutral">{history.length} readings</span>
+                </div>
+                <Sparkline data={history} color="var(--blue)"/>
                 {history.length>1&&(()=>{
-                  const v=history.map(h=>h.temp);
-                  const mn=Math.min(...v),mx=Math.max(...v),avg=v.reduce((a,b)=>a+b,0)/v.length;
+                  const vals=history.map(h=>h.temp);
+                  const mn=Math.min(...vals),mx=Math.max(...vals),avg=vals.reduce((a,b)=>a+b,0)/vals.length;
                   return(
-                    <div className="spark-stats">
-                      {[['Min',mn],['Avg',avg],['Max',mx]].map(([l,val])=>(
-                        <div key={l} className="spark-stat">
-                          <div className="spark-stat-label">{l}</div>
-                          <div className="spark-stat-val">{val.toFixed(1)}°C</div>
+                    <div style={{display:'flex',justifyContent:'space-between',marginTop:'12px',paddingTop:'12px',borderTop:'1px solid var(--border)'}}>
+                      {[['min',mn],['avg',avg],['max',mx]].map(([l,v])=>(
+                        <div key={l} style={{textAlign:'center'}}>
+                          <p style={{fontFamily:'var(--mono)',fontSize:'10px',color:'var(--muted2)',marginBottom:'4px'}}>{l}</p>
+                          <p style={{fontFamily:'var(--mono)',fontSize:'13px',fontWeight:500,color:'var(--text)'}}>{v.toFixed(1)}°C</p>
                         </div>
                       ))}
                     </div>
                   );
                 })()}
               </div>
+
             </div>
           )}
         </div>
       </div>
 
+      {/* ══ MODEL EXPLAINER SECTION ══ */}
+      <ModelInfo/>
+
+      {/* ── FOOTER ── */}
       <footer className="footer">
         <span className="footer-text">Battery Management System · AI Pipeline v3</span>
-        <span className="footer-text">FastAPI · PyTorch · React</span>
+        <span className="footer-text">FastAPI · PyTorch · React · NASA Li-ion Dataset</span>
       </footer>
     </div>
   );
