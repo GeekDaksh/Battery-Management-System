@@ -1,8 +1,11 @@
 import os
 import sys
+import time
 import torch
 import pickle
+import threading
 import traceback
+import urllib.request
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +14,9 @@ BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 STATIC_FILE  = os.path.join(BASE_DIR, "static", "index.html")
 MODEL_PATH   = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
+
+# ── Your Render URL — update this to your actual URL ──────────────────────
+RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL", "http://localhost:10000")
 
 app = FastAPI()
 
@@ -21,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Global model state ───────────────────────────────────────────────────────
+# ── Global model state ─────────────────────────────────────────────────────
 _model       = None
 _global_mean = None
 _global_std  = None
@@ -58,7 +64,26 @@ def _load_model():
         return False
 
 
-# ── Routes ───────────────────────────────────────────────────────────────────
+# ── Keep-alive: pings /health every 30s so Render never idles ─────────────
+def _keep_alive():
+    # Wait for server to fully start before pinging
+    time.sleep(15)
+    while True:
+        try:
+            url = f"{RENDER_URL}/health"
+            req = urllib.request.Request(url, headers={"User-Agent": "BMS-KeepAlive/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                print(f"[BMS] Keep-alive ping → {r.status}", flush=True)
+        except Exception as e:
+            print(f"[BMS] Keep-alive ping failed: {e}", flush=True)
+        time.sleep(30)
+
+# Start keep-alive thread (daemon=True so it dies with the process)
+_ka_thread = threading.Thread(target=_keep_alive, daemon=True)
+_ka_thread.start()
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────
 
 @app.get("/")
 async def home():
@@ -73,11 +98,8 @@ async def health():
         "load_error": _load_error,
         "model_path_exists": os.path.exists(MODEL_PATH),
         "globals_path_exists": os.path.exists(GLOBALS_PATH),
-        "files_in_models": (
-            os.listdir(os.path.join(BASE_DIR, "models"))
-            if os.path.isdir(os.path.join(BASE_DIR, "models"))
-            else "MISSING"
-        ),
+        "files_in_models": os.listdir(os.path.join(BASE_DIR, "models"))
+                           if os.path.isdir(os.path.join(BASE_DIR, "models")) else "MISSING",
     }
 
 
@@ -96,17 +118,13 @@ async def predict(data: dict):
             run_kill_agent,
         )
 
-        # ── Map all possible frontend key variants → pipeline expected keys ──
-        # Frontend sends: soc, soh, temp_C, current_A
-        # Pipeline expects: soc, soh, temp_C, current_A (lowercase, exact)
+        # Map frontend keys → pipeline expected keys
         pipeline_input = {
             "soc":       data.get("soc",       data.get("SOC",     0.85)),
             "soh":       data.get("soh",       data.get("SOH",     0.92)),
             "temp_C":    data.get("temp_C",    data.get("temp",    28.0)),
-            "current_A": data.get("current_A", data.get("current", 4.5)),
+            "current_A": data.get("current_A", data.get("current", 4.5 )),
         }
-
-        print(f"[BMS] /predict → pipeline_input: {pipeline_input}")
 
         predictor_output = run_predictor(pipeline_input, _model, _global_mean, _global_std, _device)
         df, transformer_state = run_simulator_optimiser(predictor_output)
