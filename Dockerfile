@@ -1,20 +1,16 @@
 FROM python:3.10-slim
 
-# Prevent Python from buffering logs
-
 ENV PYTHONUNBUFFERED=1
-
-# Set working directory
 
 WORKDIR /app
 
-# Install system dependencies (important for torch + stability)
+# Install system dependencies (FIXED syntax)
 
 RUN apt-get update && apt-get install -y 
 build-essential 
 && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for caching)
+# Copy requirements
 
 COPY requirements.txt .
 
@@ -22,7 +18,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy entire project
+# Copy project
 
 COPY . .
 
@@ -30,6 +26,6 @@ COPY . .
 
 EXPOSE 10000
 
-# Run FastAPI app (dynamic port support)
+# Run app
 
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-10000}"]
