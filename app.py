@@ -14,6 +14,9 @@ BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 STATIC_FILE  = os.path.join(BASE_DIR, "static", "index.html")
 MODEL_PATH   = os.path.join(BASE_DIR, "models", "best_model.pt")
 GLOBALS_PATH = os.path.join(BASE_DIR, "models", "predictor_globals.pkl")
+DATASET_DIR  = os.path.join(BASE_DIR, "dataset")
+DATASET_PATH = os.path.join(DATASET_DIR, "nsga2_synthetic_dataset.csv")
+DATA_DIR     = os.path.join(DATASET_DIR, "ECM_processed_cycles")
 
 # ── Create required directories on startup so the pipeline never OSErrors ──
 for _dir in ["dataset", "models", "static"]:
@@ -35,6 +38,27 @@ _global_mean = None
 _global_std  = None
 _load_error  = None
 _device      = torch.device("cpu")
+_pipeline    = None   # holds the imported bms_pipeline module
+
+
+def _get_pipeline():
+    """
+    Import bms_pipeline once and patch its hardcoded local paths to
+    point at BASE_DIR so the app works correctly on Render (or any server).
+    """
+    global _pipeline
+    if _pipeline is not None:
+        return _pipeline
+
+    from src import bms_pipeline as _bms
+    _bms.MODEL_PATH   = MODEL_PATH
+    _bms.GLOBALS_PATH = GLOBALS_PATH
+    _bms.DATASET_PATH = DATASET_PATH
+    _bms.DATA_DIR     = DATA_DIR
+    # Reset the cached OCV function so it picks up the patched DATA_DIR
+    _bms._OCV_FUNC    = None
+    _pipeline = _bms
+    return _pipeline
 
 
 def _load_model():
@@ -44,13 +68,13 @@ def _load_model():
     if _load_error is not None:
         return False
     try:
-        from src.bms_pipeline import BatteryTransformer
+        bms = _get_pipeline()
         print(f"[BMS] Loading model from {MODEL_PATH} ...")
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError(f"Model file missing: {MODEL_PATH}")
         if not os.path.exists(GLOBALS_PATH):
             raise FileNotFoundError(f"Globals file missing: {GLOBALS_PATH}")
-        m = BatteryTransformer(input_dim=11).to(_device)
+        m = bms.BatteryTransformer(input_dim=11).to(_device)
         m.load_state_dict(torch.load(MODEL_PATH, map_location=_device))
         m.eval()
         with open(GLOBALS_PATH, "rb") as f:
@@ -97,7 +121,7 @@ async def health():
         "load_error": _load_error,
         "model_path_exists": os.path.exists(MODEL_PATH),
         "globals_path_exists": os.path.exists(GLOBALS_PATH),
-        "dataset_dir_exists": os.path.exists(os.path.join(BASE_DIR, "dataset")),
+        "dataset_dir_exists": os.path.exists(DATASET_DIR),
         "files_in_models": os.listdir(os.path.join(BASE_DIR, "models"))
                            if os.path.isdir(os.path.join(BASE_DIR, "models")) else "MISSING",
     }
@@ -111,12 +135,7 @@ async def predict(data: dict):
             content={"status": "error", "message": f"Model not ready: {_load_error}"}
         )
     try:
-        from src.bms_pipeline import (
-            run_predictor,
-            run_simulator_optimiser,
-            run_meta_agent,
-            run_kill_agent,
-        )
+        bms = _get_pipeline()
 
         # Map frontend keys → pipeline expected keys
         pipeline_input = {
@@ -126,10 +145,13 @@ async def predict(data: dict):
             "current_A": data.get("current_A", data.get("current", 4.5 )),
         }
 
-        predictor_output = run_predictor(pipeline_input, _model, _global_mean, _global_std, _device)
-        df, transformer_state = run_simulator_optimiser(predictor_output, pipeline_input)  # fix: pass pipeline_input
-        selected_policy, policies, metrics_df, _ = run_meta_agent(df, transformer_state)
-        final_policy, decision = run_kill_agent(
+        # Ensure dataset directory exists before the pipeline tries to write CSVs
+        os.makedirs(DATASET_DIR, exist_ok=True)
+
+        predictor_output = bms.run_predictor(pipeline_input, _model, _global_mean, _global_std, _device)
+        df, transformer_state = bms.run_simulator_optimiser(predictor_output, pipeline_input)
+        selected_policy, policies, metrics_df, _ = bms.run_meta_agent(df, transformer_state)
+        final_policy, decision = bms.run_kill_agent(
             df, selected_policy, transformer_state, policies, metrics_df
         )
 
