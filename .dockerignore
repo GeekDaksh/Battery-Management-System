@@ -1,12 +1,44 @@
-**pycache**/
-*.pyc
+# ── Python ───────────────────────────────────
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
-.env
-.venv
-.git
-.gitignore
-node_modules/
-notebooks/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Data & model artifacts (mount at runtime) ─
 dataset/
-preprocessing_to_ecm copy/
+# Keep models/ OUT of image — mount as a Docker volume instead
+# models/          ← uncomment if you mount models via volume
+
+# ── Jupyter / notebooks ───────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Version control ───────────────────────────
+.git/
+.gitignore
+
+# ── OS junk ───────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── CI/CD & editor configs ────────────────────
+.github/
+.vscode/
+.idea/
+
+# ── Logs ──────────────────────────────────────
+*.log
+logs/
+
+# ── Docker Compose (not needed inside image) ──
+docker-compose*.yml
