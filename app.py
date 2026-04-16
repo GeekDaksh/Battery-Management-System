@@ -127,7 +127,7 @@ async def predict(data: dict):
         }
 
         predictor_output = run_predictor(pipeline_input, _model, _global_mean, _global_std, _device)
-        df, transformer_state = run_simulator_optimiser(predictor_output)
+        df, transformer_state = run_simulator_optimiser(predictor_output, pipeline_input)  # fix: pass pipeline_input
         selected_policy, policies, metrics_df, _ = run_meta_agent(df, transformer_state)
         final_policy, decision = run_kill_agent(
             df, selected_policy, transformer_state, policies, metrics_df
